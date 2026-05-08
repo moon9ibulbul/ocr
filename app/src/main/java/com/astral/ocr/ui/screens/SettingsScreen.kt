@@ -37,11 +37,13 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onApiKeyChanged: (String) -> Unit,
     onModelChanged: (String) -> Unit,
+    onApiProviderChanged: (String) -> Unit,
     onSliceEnabledChanged: (Boolean) -> Unit,
     onSliceHeightChanged: (Int) -> Unit
 ) {
     val apiKeyState = remember(uiState.apiKey) { mutableStateOf(uiState.apiKey) }
     val modelState = remember(uiState.model) { mutableStateOf(uiState.model) }
+    val apiProviderState = remember(uiState.apiProvider) { mutableStateOf(uiState.apiProvider) }
     val sliceEnabledState = remember(uiState.sliceEnabled) { mutableStateOf(uiState.sliceEnabled) }
     val sliceHeightState = remember(uiState.sliceHeight) { mutableStateOf(uiState.sliceHeight.toString()) }
 
@@ -53,7 +55,7 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         TopAppBar(
-            title = { Text("Pengaturan Gemini") },
+            title = { Text("Pengaturan API") },
             navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Kembali")
@@ -62,21 +64,41 @@ fun SettingsScreen(
         )
 
         Text(
-            text = "Masukkan API Key Gemini dan model vision yang ingin digunakan.",
+            text = "Pilih penyedia API dan masukkan konfigurasi yang diperlukan.",
             style = MaterialTheme.typography.bodyLarge
         )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("gemini" to "Gemini", "sumopod" to "Sumopod AI").forEach { (id, label) ->
+                Button(
+                    onClick = { apiProviderState.value = id },
+                    modifier = Modifier.weight(1f),
+                    colors = if (apiProviderState.value == id) {
+                        androidx.compose.material3.ButtonDefaults.buttonColors()
+                    } else {
+                        androidx.compose.material3.ButtonDefaults.filledTonalButtonColors()
+                    }
+                ) {
+                    Text(label)
+                }
+            }
+        }
 
         OutlinedTextField(
             value = apiKeyState.value,
             onValueChange = { apiKeyState.value = it },
-            label = { Text("API Key") },
+            label = { Text(if (apiProviderState.value == "gemini") "API Key Gemini" else "Sumopod Token") },
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = modelState.value,
             onValueChange = { modelState.value = it },
-            label = { Text("Model Gemini") },
+            label = { Text(if (apiProviderState.value == "gemini") "Model Gemini" else "Model Sumopod") },
+            placeholder = { Text(if (apiProviderState.value == "gemini") "gemini-2.0-flash" else "gemini/gemini-3.1-flash-lite-preview") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -113,6 +135,7 @@ fun SettingsScreen(
         Button(onClick = {
             onApiKeyChanged(apiKeyState.value)
             onModelChanged(modelState.value)
+            onApiProviderChanged(apiProviderState.value)
             val parsedHeight = sliceHeightState.value.toIntOrNull()?.coerceAtLeast(MIN_SEGMENT_HEIGHT)
                 ?: uiState.sliceHeight
             onSliceEnabledChanged(sliceEnabledState.value)

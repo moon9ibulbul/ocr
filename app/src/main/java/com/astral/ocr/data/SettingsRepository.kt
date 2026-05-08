@@ -17,12 +17,14 @@ class SettingsRepository(private val context: Context) {
     private object Keys {
         val apiKey = stringPreferencesKey("api_key")
         val model = stringPreferencesKey("model")
+        val apiProvider = stringPreferencesKey("api_provider")
         val sliceEnabled = booleanPreferencesKey("slice_enabled")
         val sliceHeight = intPreferencesKey("slice_height")
     }
 
     val apiKey: Flow<String> = context.dataStore.data.map { it[Keys.apiKey].orEmpty() }
     val model: Flow<String> = context.dataStore.data.map { it[Keys.model].orEmpty() }
+    val apiProvider: Flow<String> = context.dataStore.data.map { it[Keys.apiProvider] ?: "gemini" }
     val sliceEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.sliceEnabled] ?: true }
     val sliceHeight: Flow<Int> = context.dataStore.data.map { it[Keys.sliceHeight] ?: DEFAULT_SEGMENT_HEIGHT }
 
@@ -35,6 +37,12 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateModel(value: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.model] = value
+        }
+    }
+
+    suspend fun updateApiProvider(value: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.apiProvider] = value
         }
     }
 
