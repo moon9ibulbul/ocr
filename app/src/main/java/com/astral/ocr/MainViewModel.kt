@@ -37,6 +37,7 @@ class MainViewModel(
         val bulkMode: Boolean = false,
         val lastSavedPath: String? = null,
         val progressMessage: String? = null,
+        val apiProvider: String = "gemini",
         val sliceEnabled: Boolean = true,
         val sliceHeight: Int = DEFAULT_SEGMENT_HEIGHT
     )
@@ -55,6 +56,7 @@ class MainViewModel(
     val uiState: StateFlow<UiState> = combine(
         settingsRepository.apiKey,
         settingsRepository.model,
+        settingsRepository.apiProvider,
         settingsRepository.sliceEnabled,
         settingsRepository.sliceHeight,
         mutableProcessing,
@@ -65,17 +67,19 @@ class MainViewModel(
     ) { values ->
         val apiKey = values[0] as String
         val model = values[1] as String
-        val sliceEnabled = values[2] as Boolean
-        val sliceHeight = values[3] as Int
-        val processing = values[4] as Boolean
-        val results = values[5] as List<OcrResult>
-        val bulk = values[6] as Boolean
-        val saved = values[7] as String?
-        val progress = values[8] as String?
+        val apiProvider = values[2] as String
+        val sliceEnabled = values[3] as Boolean
+        val sliceHeight = values[4] as Int
+        val processing = values[5] as Boolean
+        val results = values[6] as List<OcrResult>
+        val bulk = values[7] as Boolean
+        val saved = values[8] as String?
+        val progress = values[9] as String?
 
         UiState(
             apiKey = apiKey,
             model = if (model.isBlank()) DEFAULT_MODEL else model,
+            apiProvider = apiProvider,
             isProcessing = processing,
             results = results,
             bulkMode = bulk,
@@ -103,6 +107,12 @@ class MainViewModel(
     fun updateModel(value: String) {
         viewModelScope.launch {
             settingsRepository.updateModel(value)
+        }
+    }
+
+    fun updateApiProvider(value: String) {
+        viewModelScope.launch {
+            settingsRepository.updateApiProvider(value)
         }
     }
 
@@ -175,6 +185,7 @@ class MainViewModel(
                     uri,
                     uiState.value.apiKey,
                     uiState.value.model,
+                    apiProvider = uiState.value.apiProvider,
                     sliceEnabled = uiState.value.sliceEnabled,
                     targetSliceHeight = uiState.value.sliceHeight,
                     pageIndex = index,
