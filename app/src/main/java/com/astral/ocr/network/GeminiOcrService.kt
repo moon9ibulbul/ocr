@@ -37,6 +37,7 @@ class GeminiOcrService(
         uri: Uri,
         apiKey: String,
         model: String,
+        apiProvider: String = "gemini",
         sliceEnabled: Boolean = true,
         targetSliceHeight: Int = DEFAULT_SEGMENT_HEIGHT,
         pageIndex: Int = 0,
@@ -72,7 +73,7 @@ class GeminiOcrService(
             val prompt = buildPrompt(index + 1, totalSegments)
             val base64 = encodeBitmap(segment)
 
-            val response = requestWithRetry(apiKey, model, payloadMimeType, base64, prompt)
+            val response = requestWithRetry(apiKey, model, payloadMimeType, base64, prompt, apiProvider = apiProvider)
             response.fold(
                 onSuccess = { raw ->
                     segmentResults.add(
@@ -243,50 +244,90 @@ class GeminiOcrService(
         base64: String,
         prompt: String,
         retries: Int = MAX_RETRIES,
+        apiProvider: String = "gemini"
     ): Result<String> {
         var attempt = 0
         var delayMs = INITIAL_BACKOFF_MS
 
         while (attempt <= retries) {
-            val requestBody = GeminiRequest(
-                contents = listOf(
-                    GeminiContent(
-                        parts = listOf(
-                            GeminiPart(text = prompt),
-                            GeminiPart(
-                                inlineData = InlineData(
-                                    mimeType = mimeType,
-                                    data = base64
+            val request = if (apiProvider == "sumopod") {
+                val requestBody = OpenAiRequest(
+                    model = model,
+                    messages = listOf(
+                        OpenAiMessage(
+                            role = "user",
+                            content = listOf(
+                                OpenAiContentPart(type = "text", text = prompt),
+                                OpenAiContentPart(
+                                    type = "image_url",
+                                    imageUrl = OpenAiImageUrl(url = "data:$mimeType;base64,$base64")
+                                )
+                            )
+                        )
+                    ),
+                    maxTokens = 2048
+                )
+                val mediaType = "application/json; charset=utf-8".toMediaType()
+                val body = json.encodeToString(requestBody).toRequestBody(mediaType)
+                Request.Builder()
+                    .url("https://ai.sumopod.com/v1/chat/completions")
+                    .header("Authorization", "Bearer $apiKey")
+                    .post(body)
+                    .build()
+            } else {
+                val requestBody = GeminiRequest(
+                    contents = listOf(
+                        GeminiContent(
+                            parts = listOf(
+                                GeminiPart(text = prompt),
+                                GeminiPart(
+                                    inlineData = InlineData(
+                                        mimeType = mimeType,
+                                        data = base64
+                                    )
                                 )
                             )
                         )
                     )
                 )
-            )
-
-            val mediaType = "application/json; charset=utf-8".toMediaType()
-            val body = json.encodeToString(requestBody).toRequestBody(mediaType)
-            val request = Request.Builder()
-                .url("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey")
-                .post(body)
-                .build()
+                val mediaType = "application/json; charset=utf-8".toMediaType()
+                val body = json.encodeToString(requestBody).toRequestBody(mediaType)
+                Request.Builder()
+                    .url("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey")
+                    .post(body)
+                    .build()
+            }
 
             try {
                 executeRequest(request).use { response ->
                     if (!response.isSuccessful) {
                         val errorBody = response.body?.string()
-                        val message = parseErrorMessage(errorBody)
+                        val message = if (apiProvider == "sumopod") {
+                            try {
+                                json.decodeFromString(OpenAiResponse.serializer(), errorBody ?: "").error?.message
+                            } catch (_: Exception) {
+                                errorBody
+                            }
+                        } else {
+                            parseErrorMessage(errorBody)
+                        }
                         val friendly = if (response.code == 429) {
-                            "Batas kuota Gemini tercapai. Coba lagi nanti atau gunakan model lain."
+                            "Batas kuota API tercapai. Coba lagi nanti atau gunakan model lain."
                         } else message
                         throw IOException(friendly ?: "Permintaan gagal dengan kode ${response.code}")
                     }
 
-                    val responseBody = response.body?.string() ?: return Result.failure(IOException("Respon kosong dari Gemini"))
-                    val parsed = json.decodeFromString(GenerateContentResponse.serializer(), responseBody)
-                    val text = parsed.candidates?.firstOrNull()?.content?.parts?.firstOrNull { it.text != null }?.text
+                    val responseBody = response.body?.string() ?: return Result.failure(IOException("Respon kosong dari API"))
+                    val text = if (apiProvider == "sumopod") {
+                        val parsed = json.decodeFromString(OpenAiResponse.serializer(), responseBody)
+                        parsed.choices?.firstOrNull()?.message?.content
+                    } else {
+                        val parsed = json.decodeFromString(GenerateContentResponse.serializer(), responseBody)
+                        parsed.candidates?.firstOrNull()?.content?.parts?.firstOrNull { it.text != null }?.text
+                    }
+
                     if (text.isNullOrBlank()) {
-                        return Result.failure(IllegalStateException("Gemini tidak mengembalikan teks."))
+                        return Result.failure(IllegalStateException("API tidak mengembalikan teks."))
                     }
                     return Result.success(text)
                 }

@@ -60,3 +60,53 @@ data class GeminiError(
     val message: String? = null,
     val status: String? = null
 )
+
+@Serializable
+data class OpenAiRequest(
+    val model: String,
+    val messages: List<OpenAiMessage>,
+    @SerialName("max_tokens") val maxTokens: Int? = null,
+    val temperature: Float? = null
+)
+
+@Serializable
+data class OpenAiMessage(
+    val role: String,
+    val content: List<OpenAiContentPart>
+)
+
+@Serializable
+data class OpenAiContentPart(
+    val type: String,
+    val text: String? = null,
+    @SerialName("image_url") val imageUrl: OpenAiImageUrl? = null
+)
+
+@Serializable
+data class OpenAiImageUrl(
+    val url: String
+)
+
+@Serializable
+data class OpenAiResponse(
+    val choices: List<OpenAiChoice>? = null,
+    val error: OpenAiError? = null
+)
+
+@Serializable
+data class OpenAiChoice(
+    val message: OpenAiMessageResponse? = null,
+    @SerialName("finish_reason") val finishReason: String? = null
+)
+
+@Serializable
+data class OpenAiMessageResponse(
+    val role: String? = null,
+    val content: String? = null
+)
+
+@Serializable
+data class OpenAiError(
+    val message: String? = null,
+    val type: String? = null
+)
