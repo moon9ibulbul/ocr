@@ -40,7 +40,10 @@ fun SettingsScreen(
     onApiProviderChanged: (String) -> Unit,
     onSliceEnabledChanged: (Boolean) -> Unit,
     onSliceHeightChanged: (Int) -> Unit,
-    onCustomLegendChanged: (String) -> Unit
+    onCustomLegendChanged: (String) -> Unit,
+    onLegendBubbleRoundChanged: (String) -> Unit,
+    onLegendBubbleSquareChanged: (String) -> Unit,
+    onLegendOutsideChanged: (String) -> Unit
 ) {
     val apiKeyState = remember(uiState.apiKey) { mutableStateOf(uiState.apiKey) }
     val modelState = remember(uiState.model) { mutableStateOf(uiState.model) }
@@ -48,6 +51,9 @@ fun SettingsScreen(
     val sliceEnabledState = remember(uiState.sliceEnabled) { mutableStateOf(uiState.sliceEnabled) }
     val sliceHeightState = remember(uiState.sliceHeight) { mutableStateOf(uiState.sliceHeight.toString()) }
     val customLegendState = remember(uiState.customLegend) { mutableStateOf(uiState.customLegend) }
+    val legendBubbleRoundState = remember(uiState.legendBubbleRound) { mutableStateOf(uiState.legendBubbleRound) }
+    val legendBubbleSquareState = remember(uiState.legendBubbleSquare) { mutableStateOf(uiState.legendBubbleSquare) }
+    val legendOutsideState = remember(uiState.legendOutside) { mutableStateOf(uiState.legendOutside) }
 
     Column(
         modifier = Modifier
@@ -135,11 +141,38 @@ fun SettingsScreen(
         )
 
         OutlinedTextField(
+            value = legendBubbleRoundState.value,
+            onValueChange = { legendBubbleRoundState.value = it },
+            label = { Text("Custom Legend (Bubble Bulat)") },
+            placeholder = { Text("()") },
+            supportingText = { Text("Default: ()") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = legendBubbleSquareState.value,
+            onValueChange = { legendBubbleSquareState.value = it },
+            label = { Text("Custom Legend (Bubble Kotak)") },
+            placeholder = { Text("[]") },
+            supportingText = { Text("Default: []") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
             value = customLegendState.value,
             onValueChange = { customLegendState.value = it },
             label = { Text("Custom Legend (SFX)") },
             placeholder = { Text("//") },
-            supportingText = { Text("Ganti penanda default SFX (//) sesuai keinginan.") },
+            supportingText = { Text("Default: //") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = legendOutsideState.value,
+            onValueChange = { legendOutsideState.value = it },
+            label = { Text("Custom Legend (Luar Bubble)") },
+            placeholder = { Text("''") },
+            supportingText = { Text("Default: ''") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -152,6 +185,9 @@ fun SettingsScreen(
             onSliceEnabledChanged(sliceEnabledState.value)
             onSliceHeightChanged(parsedHeight)
             onCustomLegendChanged(customLegendState.value)
+            onLegendBubbleRoundChanged(legendBubbleRoundState.value)
+            onLegendBubbleSquareChanged(legendBubbleSquareState.value)
+            onLegendOutsideChanged(legendOutsideState.value)
             onBack()
         }) {
             Text("Simpan")

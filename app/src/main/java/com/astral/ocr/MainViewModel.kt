@@ -40,7 +40,10 @@ class MainViewModel(
         val apiProvider: String = "gemini",
         val sliceEnabled: Boolean = true,
         val sliceHeight: Int = DEFAULT_SEGMENT_HEIGHT,
-        val customLegend: String = "//"
+        val customLegend: String = "//",
+        val legendBubbleRound: String = "()",
+        val legendBubbleSquare: String = "[]",
+        val legendOutside: String = "''"
     )
 
     private val mutableResults = MutableStateFlow<List<OcrResult>>(emptyList())
@@ -61,6 +64,9 @@ class MainViewModel(
         settingsRepository.sliceEnabled,
         settingsRepository.sliceHeight,
         settingsRepository.customLegend,
+        settingsRepository.legendBubbleRound,
+        settingsRepository.legendBubbleSquare,
+        settingsRepository.legendOutside,
         mutableProcessing,
         mutableResults,
         mutableBulkMode,
@@ -73,11 +79,14 @@ class MainViewModel(
         val sliceEnabled = values[3] as Boolean
         val sliceHeight = values[4] as Int
         val customLegend = values[5] as String
-        val processing = values[6] as Boolean
-        val results = values[7] as List<OcrResult>
-        val bulk = values[8] as Boolean
-        val saved = values[9] as String?
-        val progress = values[10] as String?
+        val legendBubbleRound = values[6] as String
+        val legendBubbleSquare = values[7] as String
+        val legendOutside = values[8] as String
+        val processing = values[9] as Boolean
+        val results = values[10] as List<OcrResult>
+        val bulk = values[11] as Boolean
+        val saved = values[12] as String?
+        val progress = values[13] as String?
 
         UiState(
             apiKey = apiKey,
@@ -90,7 +99,10 @@ class MainViewModel(
             progressMessage = progress,
             sliceEnabled = sliceEnabled,
             sliceHeight = sliceHeight.coerceAtLeast(MIN_SEGMENT_HEIGHT),
-            customLegend = if (customLegend.isBlank()) "//" else customLegend
+            customLegend = if (customLegend.isBlank()) "//" else customLegend,
+            legendBubbleRound = if (legendBubbleRound.isBlank()) "()" else legendBubbleRound,
+            legendBubbleSquare = if (legendBubbleSquare.isBlank()) "[]" else legendBubbleSquare,
+            legendOutside = if (legendOutside.isBlank()) "''" else legendOutside
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState())
 
@@ -136,6 +148,24 @@ class MainViewModel(
     fun updateCustomLegend(value: String) {
         viewModelScope.launch {
             settingsRepository.updateCustomLegend(value)
+        }
+    }
+
+    fun updateLegendBubbleRound(value: String) {
+        viewModelScope.launch {
+            settingsRepository.updateLegendBubbleRound(value)
+        }
+    }
+
+    fun updateLegendBubbleSquare(value: String) {
+        viewModelScope.launch {
+            settingsRepository.updateLegendBubbleSquare(value)
+        }
+    }
+
+    fun updateLegendOutside(value: String) {
+        viewModelScope.launch {
+            settingsRepository.updateLegendOutside(value)
         }
     }
 
@@ -201,7 +231,10 @@ class MainViewModel(
                     pageIndex = index,
                     totalPages = total,
                     onProgress = { message -> mutableProgress.value = message },
-                    customLegend = uiState.value.customLegend
+                    customLegend = uiState.value.customLegend,
+                    legendBubbleRound = uiState.value.legendBubbleRound,
+                    legendBubbleSquare = uiState.value.legendBubbleSquare,
+                    legendOutside = uiState.value.legendOutside
                 )
                 result.fold(
                     onSuccess = { text ->

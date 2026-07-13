@@ -43,7 +43,10 @@ class GeminiOcrService(
         pageIndex: Int = 0,
         totalPages: Int = 1,
         onProgress: (String) -> Unit = {},
-        customLegend: String = "//"
+        customLegend: String = "//",
+        legendBubbleRound: String = "()",
+        legendBubbleSquare: String = "[]",
+        legendOutside: String = "''"
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank() || model.isBlank()) {
             return@withContext Result.failure(IllegalStateException("API key dan model harus diisi pada pengaturan."))
@@ -71,7 +74,7 @@ class GeminiOcrService(
         segments.forEachIndexed { index, segment ->
             onProgress("Gambar ${pageIndex + 1}/$totalPages, segmen ${index + 1}/$totalSegments")
 
-            val prompt = buildPrompt(index + 1, totalSegments, customLegend)
+            val prompt = buildPrompt(index + 1, totalSegments, customLegend, legendBubbleRound, legendBubbleSquare, legendOutside)
             val base64 = encodeBitmap(segment)
 
             val response = requestWithRetry(apiKey, model, payloadMimeType, base64, prompt, apiProvider = apiProvider)
@@ -82,7 +85,7 @@ class GeminiOcrService(
                             pageIndex = pageIndex,
                             segmentIndex = index,
                             totalSegments = totalSegments,
-                            rawText = normalizeOutput(raw, customLegend)
+                            rawText = normalizeOutput(raw, customLegend, legendBubbleRound, legendBubbleSquare, legendOutside)
                         )
                     )
                 },
@@ -106,7 +109,14 @@ class GeminiOcrService(
         }
     }
 
-    private fun buildPrompt(segmentIndex: Int, totalSegments: Int, customLegend: String = "//"): String =
+    private fun buildPrompt(
+        segmentIndex: Int,
+        totalSegments: Int,
+        customLegend: String = "//",
+        legendBubbleRound: String = "()",
+        legendBubbleSquare: String = "[]",
+        legendOutside: String = "''"
+    ): String =
         """
             Kamu adalah asisten OCR khusus untuk manhwa. Gambar ini adalah SEGMENT ${segmentIndex}/$totalSegments dari halaman komik panjang yang dipotong secara vertikal.
             Hanya baca teks yang benar-benar terlihat pada segmen ini, jangan menebak kelanjutan di luar gambar.\n\n
@@ -115,15 +125,15 @@ class GeminiOcrService(
             - Urutkan berdasarkan posisi visual: dari atas ke bawah, dan jika sejajar secara vertikal, dari kiri ke kanan.
             - Beri nomor setiap blok teks agar urutan mudah diikuti. Gunakan format `[BLOCK n] <tipe> <teks>`.
             - Tipe teks:
-              * Bubble bulat/oval -> `()`
-              * Bubble kotak -> `[]`
+              * Bubble bulat/oval -> `$legendBubbleRound`
+              * Bubble kotak -> `$legendBubbleSquare`
               * SFX -> `$customLegend`
-              * Teks luar bubble -> `''`
+              * Teks luar bubble -> `$legendOutside`
             - Contoh keluaran:
-              [BLOCK 1] () Halo apa kabar?
-              [BLOCK 2] [] Ini contoh narasi.
+              [BLOCK 1] $legendBubbleRound Halo apa kabar?
+              [BLOCK 2] $legendBubbleSquare Ini contoh narasi.
               [BLOCK 3] $customLegend *tap tap*
-              [BLOCK 4] '' Catatan editor\n\n
+              [BLOCK 4] $legendOutside Catatan editor\n\n
             Aturan tambahan:
             - Urutkan teks sesuai instruksi posisi, jangan mengubah urutan dialog seenaknya.
             - Jangan menggabungkan bubble berbeda menjadi satu kalimat jika posisinya terpisah.
@@ -131,7 +141,13 @@ class GeminiOcrService(
             - Output hanya daftar teks dengan format di atas tanpa penjelasan tambahan.
         """.trimIndent()
 
-    private fun normalizeOutput(raw: String, customLegend: String = "//"): String {
+    private fun normalizeOutput(
+        raw: String,
+        customLegend: String = "//",
+        legendBubbleRound: String = "()",
+        legendBubbleSquare: String = "[]",
+        legendOutside: String = "''"
+    ): String {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return ""
 
@@ -168,7 +184,7 @@ class GeminiOcrService(
         data class Block(val order: Int?, val prefix: String?, val builder: StringBuilder, val originalIndex: Int)
 
         val blockRegex = Regex("^\\[BLOCK\\s*(\\d+)]\\s*(.*)$", RegexOption.IGNORE_CASE)
-        val prefixes = listOf("()", "[]", customLegend, "''")
+        val prefixes = listOf(legendBubbleRound, legendBubbleSquare, customLegend, legendOutside)
         val blocks = mutableListOf<Block>()
         var lastBlock: Block? = null
 
