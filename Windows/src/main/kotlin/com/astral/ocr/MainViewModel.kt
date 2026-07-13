@@ -161,6 +161,42 @@ class MainViewModel(
         }
     }
 
+    private val naturalOrderComparator = Comparator<File> { f1, f2 ->
+        val s1 = f1.name
+        val s2 = f2.name
+
+        val regex = Regex("(\\d+)|(\\D+)")
+        val chunks1 = regex.findAll(s1).map { it.value }.toList()
+        val chunks2 = regex.findAll(s2).map { it.value }.toList()
+
+        var i = 0
+        while (i < chunks1.size && i < chunks2.size) {
+            val c1 = chunks1[i]
+            val c2 = chunks2[i]
+
+            val isDigit1 = c1[0].isDigit()
+            val isDigit2 = c2[0].isDigit()
+
+            val result = if (isDigit1 && isDigit2) {
+                val n1 = c1.toBigIntegerOrNull()
+                val n2 = c2.toBigIntegerOrNull()
+                if (n1 != null && n2 != null) {
+                    val cmp = n1.compareTo(n2)
+                    if (cmp != 0) cmp else c1.compareTo(c2)
+                } else {
+                    c1.compareTo(c2)
+                }
+            } else {
+                c1.compareTo(c2, ignoreCase = true)
+            }
+
+            if (result != 0) return@Comparator result
+            i++
+        }
+        val lenCmp = chunks1.size.compareTo(chunks2.size)
+        if (lenCmp != 0) lenCmp else s1.compareTo(s2)
+    }
+
     fun processSingle(file: File) {
         processingJob?.cancel()
         processingJob = scope.launch {
@@ -172,7 +208,8 @@ class MainViewModel(
         if (files.isEmpty()) return
         processingJob?.cancel()
         processingJob = scope.launch {
-            performProcessing(files)
+            val sortedFiles = files.sortedWith(naturalOrderComparator)
+            performProcessing(sortedFiles)
         }
     }
 
