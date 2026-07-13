@@ -120,6 +120,8 @@ class GeminiOcrService(
         """
             Kamu adalah asisten OCR khusus untuk manhwa. Gambar ini adalah SEGMENT ${segmentIndex}/$totalSegments dari halaman komik panjang yang dipotong secara vertikal.
             Hanya baca teks yang benar-benar terlihat pada segmen ini, jangan menebak kelanjutan di luar gambar.\n\n
+            PENTING: Jika segmen gambar ini kosong, tidak memiliki balon ucapan (speech bubble), tidak memiliki efek suara (SFX), atau tidak memiliki teks sama sekali, kamu HARUS mengembalikan teks "Tidak ada teks yang terdeteksi". Jangan berhalusinasi, jangan menebak dialog, dan jangan mengasumsikan dialog atau cerita sendiri jika gambarnya kosong atau tidak ada teks.
+
             Tugas:
             - Temukan semua teks pada bubble bulat/oval, bubble kotak, efek suara (SFX), dan teks luar bubble.
             - Urutkan berdasarkan posisi visual: dari atas ke bawah, dan jika sejajar secara vertikal, dari kiri ke kanan.
