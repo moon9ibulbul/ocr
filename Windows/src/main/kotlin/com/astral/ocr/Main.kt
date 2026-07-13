@@ -248,6 +248,8 @@ fun HomeScreen(
     uiState: MainViewModel.UiState,
     viewModel: MainViewModel
 ) {
+    val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+
     Row(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalArrangement = Arrangement.spacedBy(24.dp)
@@ -415,7 +417,7 @@ fun HomeScreen(
 
                             Button(
                                 onClick = {
-                                    copyToClipboard(combinedText)
+                                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(combinedText))
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
                             ) {
@@ -429,9 +431,14 @@ fun HomeScreen(
                                     val filename = if (uiState.bulkMode) "astral_bulk_result.txt" else "astral_result.txt"
                                     val saveFile = saveFileDialog(defaultFilename = filename)
                                     if (saveFile != null) {
+                                        val finalFile = if (saveFile.name.lowercase().endsWith(".txt")) {
+                                            saveFile
+                                        } else {
+                                            File(saveFile.parent, saveFile.name + ".txt")
+                                        }
                                         try {
-                                            saveFile.writeText(combinedText)
-                                            viewModel.setLastSavedPath(saveFile.absolutePath)
+                                            finalFile.writeText(combinedText)
+                                            viewModel.setLastSavedPath(finalFile.absolutePath)
                                         } catch (e: Exception) {
                                             e.printStackTrace()
                                         }
@@ -553,6 +560,44 @@ fun SettingsScreen(
 ) {
     val scrollState = rememberScrollState()
 
+    var apiKey by remember { mutableStateOf(uiState.apiKey) }
+    var model by remember { mutableStateOf(uiState.model) }
+    var legendBubbleRound by remember { mutableStateOf(uiState.legendBubbleRound) }
+    var legendBubbleSquare by remember { mutableStateOf(uiState.legendBubbleSquare) }
+    var customLegend by remember { mutableStateOf(uiState.customLegend) }
+    var legendOutside by remember { mutableStateOf(uiState.legendOutside) }
+
+    LaunchedEffect(uiState.apiKey) {
+        if (apiKey != uiState.apiKey) {
+            apiKey = uiState.apiKey
+        }
+    }
+    LaunchedEffect(uiState.model) {
+        if (model != uiState.model) {
+            model = uiState.model
+        }
+    }
+    LaunchedEffect(uiState.legendBubbleRound) {
+        if (legendBubbleRound != uiState.legendBubbleRound) {
+            legendBubbleRound = uiState.legendBubbleRound
+        }
+    }
+    LaunchedEffect(uiState.legendBubbleSquare) {
+        if (legendBubbleSquare != uiState.legendBubbleSquare) {
+            legendBubbleSquare = uiState.legendBubbleSquare
+        }
+    }
+    LaunchedEffect(uiState.customLegend) {
+        if (customLegend != uiState.customLegend) {
+            customLegend = uiState.customLegend
+        }
+    }
+    LaunchedEffect(uiState.legendOutside) {
+        if (legendOutside != uiState.legendOutside) {
+            legendOutside = uiState.legendOutside
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -610,8 +655,11 @@ fun SettingsScreen(
 
                 // API Key Text Field
                 OutlinedTextField(
-                    value = uiState.apiKey,
-                    onValueChange = viewModel::updateApiKey,
+                    value = apiKey,
+                    onValueChange = {
+                        apiKey = it
+                        viewModel.updateApiKey(it)
+                    },
                     label = { Text("API Key") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -622,8 +670,11 @@ fun SettingsScreen(
 
                 // Model Text Field
                 OutlinedTextField(
-                    value = uiState.model,
-                    onValueChange = viewModel::updateModel,
+                    value = model,
+                    onValueChange = {
+                        model = it
+                        viewModel.updateModel(it)
+                    },
                     label = { Text("Nama Model") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -685,7 +736,7 @@ fun SettingsScreen(
                         Slider(
                             value = uiState.sliceHeight.toFloat(),
                             onValueChange = { viewModel.updateSliceHeight(it.toInt()) },
-                            valueRange = 400f..3000f,
+                            valueRange = 400f..4500f,
                             colors = SliderDefaults.colors(
                                 thumbColor = AuroraCyan,
                                 activeTrackColor = CosmicPurple,
@@ -718,10 +769,22 @@ fun SettingsScreen(
                 )
 
                 val legends = listOf(
-                    Triple("Bubble Bulat", uiState.legendBubbleRound, viewModel::updateLegendBubbleRound),
-                    Triple("Bubble Kotak", uiState.legendBubbleSquare, viewModel::updateLegendBubbleSquare),
-                    Triple("Efek Suara (SFX)", uiState.customLegend, viewModel::updateCustomLegend),
-                    Triple("Teks Luar Bubble", uiState.legendOutside, viewModel::updateLegendOutside)
+                    Triple("Bubble Bulat", legendBubbleRound, { newValue: String ->
+                        legendBubbleRound = newValue
+                        viewModel.updateLegendBubbleRound(newValue)
+                    }),
+                    Triple("Bubble Kotak", legendBubbleSquare, { newValue: String ->
+                        legendBubbleSquare = newValue
+                        viewModel.updateLegendBubbleSquare(newValue)
+                    }),
+                    Triple("Efek Suara (SFX)", customLegend, { newValue: String ->
+                        customLegend = newValue
+                        viewModel.updateCustomLegend(newValue)
+                    }),
+                    Triple("Teks Luar Bubble", legendOutside, { newValue: String ->
+                        legendOutside = newValue
+                        viewModel.updateLegendOutside(newValue)
+                    })
                 )
 
                 Row(
