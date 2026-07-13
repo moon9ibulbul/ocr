@@ -39,7 +39,8 @@ class MainViewModel(
         val progressMessage: String? = null,
         val apiProvider: String = "gemini",
         val sliceEnabled: Boolean = true,
-        val sliceHeight: Int = DEFAULT_SEGMENT_HEIGHT
+        val sliceHeight: Int = DEFAULT_SEGMENT_HEIGHT,
+        val customLegend: String = "//"
     )
 
     private val mutableResults = MutableStateFlow<List<OcrResult>>(emptyList())
@@ -59,6 +60,7 @@ class MainViewModel(
         settingsRepository.apiProvider,
         settingsRepository.sliceEnabled,
         settingsRepository.sliceHeight,
+        settingsRepository.customLegend,
         mutableProcessing,
         mutableResults,
         mutableBulkMode,
@@ -70,11 +72,12 @@ class MainViewModel(
         val apiProvider = values[2] as String
         val sliceEnabled = values[3] as Boolean
         val sliceHeight = values[4] as Int
-        val processing = values[5] as Boolean
-        val results = values[6] as List<OcrResult>
-        val bulk = values[7] as Boolean
-        val saved = values[8] as String?
-        val progress = values[9] as String?
+        val customLegend = values[5] as String
+        val processing = values[6] as Boolean
+        val results = values[7] as List<OcrResult>
+        val bulk = values[8] as Boolean
+        val saved = values[9] as String?
+        val progress = values[10] as String?
 
         UiState(
             apiKey = apiKey,
@@ -86,7 +89,8 @@ class MainViewModel(
             lastSavedPath = saved,
             progressMessage = progress,
             sliceEnabled = sliceEnabled,
-            sliceHeight = sliceHeight.coerceAtLeast(MIN_SEGMENT_HEIGHT)
+            sliceHeight = sliceHeight.coerceAtLeast(MIN_SEGMENT_HEIGHT),
+            customLegend = if (customLegend.isBlank()) "//" else customLegend
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState())
 
@@ -126,6 +130,12 @@ class MainViewModel(
         viewModelScope.launch {
             val safeValue = value.coerceAtLeast(MIN_SEGMENT_HEIGHT)
             settingsRepository.updateSliceHeight(safeValue)
+        }
+    }
+
+    fun updateCustomLegend(value: String) {
+        viewModelScope.launch {
+            settingsRepository.updateCustomLegend(value)
         }
     }
 
@@ -190,7 +200,8 @@ class MainViewModel(
                     targetSliceHeight = uiState.value.sliceHeight,
                     pageIndex = index,
                     totalPages = total,
-                    onProgress = { message -> mutableProgress.value = message }
+                    onProgress = { message -> mutableProgress.value = message },
+                    customLegend = uiState.value.customLegend
                 )
                 result.fold(
                     onSuccess = { text ->

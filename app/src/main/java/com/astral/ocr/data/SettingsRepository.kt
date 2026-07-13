@@ -20,6 +20,7 @@ class SettingsRepository(private val context: Context) {
         val apiProvider = stringPreferencesKey("api_provider")
         val sliceEnabled = booleanPreferencesKey("slice_enabled")
         val sliceHeight = intPreferencesKey("slice_height")
+        val customLegend = stringPreferencesKey("custom_legend")
     }
 
     val apiKey: Flow<String> = context.dataStore.data.map { it[Keys.apiKey].orEmpty() }
@@ -27,6 +28,7 @@ class SettingsRepository(private val context: Context) {
     val apiProvider: Flow<String> = context.dataStore.data.map { it[Keys.apiProvider] ?: "gemini" }
     val sliceEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.sliceEnabled] ?: true }
     val sliceHeight: Flow<Int> = context.dataStore.data.map { it[Keys.sliceHeight] ?: DEFAULT_SEGMENT_HEIGHT }
+    val customLegend: Flow<String> = context.dataStore.data.map { it[Keys.customLegend].orEmpty().ifBlank { "//" } }
 
     suspend fun updateApiKey(value: String) {
         context.dataStore.edit { prefs ->
@@ -55,6 +57,12 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateSliceHeight(value: Int) {
         context.dataStore.edit { prefs ->
             prefs[Keys.sliceHeight] = value
+        }
+    }
+
+    suspend fun updateCustomLegend(value: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.customLegend] = value
         }
     }
 }

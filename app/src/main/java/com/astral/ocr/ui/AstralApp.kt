@@ -127,7 +127,8 @@ fun AstralApp(
                         onModelChanged = viewModel::updateModel,
                         onApiProviderChanged = viewModel::updateApiProvider,
                         onSliceEnabledChanged = viewModel::updateSliceEnabled,
-                        onSliceHeightChanged = viewModel::updateSliceHeight
+                        onSliceHeightChanged = viewModel::updateSliceHeight,
+                        onCustomLegendChanged = viewModel::updateCustomLegend
                     )
                 }
             }

@@ -39,13 +39,15 @@ fun SettingsScreen(
     onModelChanged: (String) -> Unit,
     onApiProviderChanged: (String) -> Unit,
     onSliceEnabledChanged: (Boolean) -> Unit,
-    onSliceHeightChanged: (Int) -> Unit
+    onSliceHeightChanged: (Int) -> Unit,
+    onCustomLegendChanged: (String) -> Unit
 ) {
     val apiKeyState = remember(uiState.apiKey) { mutableStateOf(uiState.apiKey) }
     val modelState = remember(uiState.model) { mutableStateOf(uiState.model) }
     val apiProviderState = remember(uiState.apiProvider) { mutableStateOf(uiState.apiProvider) }
     val sliceEnabledState = remember(uiState.sliceEnabled) { mutableStateOf(uiState.sliceEnabled) }
     val sliceHeightState = remember(uiState.sliceHeight) { mutableStateOf(uiState.sliceHeight.toString()) }
+    val customLegendState = remember(uiState.customLegend) { mutableStateOf(uiState.customLegend) }
 
     Column(
         modifier = Modifier
@@ -132,6 +134,15 @@ fun SettingsScreen(
             enabled = sliceEnabledState.value
         )
 
+        OutlinedTextField(
+            value = customLegendState.value,
+            onValueChange = { customLegendState.value = it },
+            label = { Text("Custom Legend (SFX)") },
+            placeholder = { Text("//") },
+            supportingText = { Text("Ganti penanda default SFX (//) sesuai keinginan.") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Button(onClick = {
             onApiKeyChanged(apiKeyState.value)
             onModelChanged(modelState.value)
@@ -140,6 +151,7 @@ fun SettingsScreen(
                 ?: uiState.sliceHeight
             onSliceEnabledChanged(sliceEnabledState.value)
             onSliceHeightChanged(parsedHeight)
+            onCustomLegendChanged(customLegendState.value)
             onBack()
         }) {
             Text("Simpan")

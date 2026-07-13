@@ -43,6 +43,7 @@ class GeminiOcrService(
         pageIndex: Int = 0,
         totalPages: Int = 1,
         onProgress: (String) -> Unit = {},
+        customLegend: String = "//"
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank() || model.isBlank()) {
             return@withContext Result.failure(IllegalStateException("API key dan model harus diisi pada pengaturan."))
@@ -70,7 +71,7 @@ class GeminiOcrService(
         segments.forEachIndexed { index, segment ->
             onProgress("Gambar ${pageIndex + 1}/$totalPages, segmen ${index + 1}/$totalSegments")
 
-            val prompt = buildPrompt(index + 1, totalSegments)
+            val prompt = buildPrompt(index + 1, totalSegments, customLegend)
             val base64 = encodeBitmap(segment)
 
             val response = requestWithRetry(apiKey, model, payloadMimeType, base64, prompt, apiProvider = apiProvider)
@@ -81,7 +82,7 @@ class GeminiOcrService(
                             pageIndex = pageIndex,
                             segmentIndex = index,
                             totalSegments = totalSegments,
-                            rawText = normalizeOutput(raw)
+                            rawText = normalizeOutput(raw, customLegend)
                         )
                     )
                 },
@@ -105,7 +106,7 @@ class GeminiOcrService(
         }
     }
 
-    private fun buildPrompt(segmentIndex: Int, totalSegments: Int): String =
+    private fun buildPrompt(segmentIndex: Int, totalSegments: Int, customLegend: String = "//"): String =
         """
             Kamu adalah asisten OCR khusus untuk manhwa. Gambar ini adalah SEGMENT ${segmentIndex}/$totalSegments dari halaman komik panjang yang dipotong secara vertikal.
             Hanya baca teks yang benar-benar terlihat pada segmen ini, jangan menebak kelanjutan di luar gambar.\n\n
@@ -116,12 +117,12 @@ class GeminiOcrService(
             - Tipe teks:
               * Bubble bulat/oval -> `()`
               * Bubble kotak -> `[]`
-              * SFX -> `//`
+              * SFX -> `$customLegend`
               * Teks luar bubble -> `''`
             - Contoh keluaran:
               [BLOCK 1] () Halo apa kabar?
               [BLOCK 2] [] Ini contoh narasi.
-              [BLOCK 3] // *tap tap*
+              [BLOCK 3] $customLegend *tap tap*
               [BLOCK 4] '' Catatan editor\n\n
             Aturan tambahan:
             - Urutkan teks sesuai instruksi posisi, jangan mengubah urutan dialog seenaknya.
@@ -130,7 +131,7 @@ class GeminiOcrService(
             - Output hanya daftar teks dengan format di atas tanpa penjelasan tambahan.
         """.trimIndent()
 
-    private fun normalizeOutput(raw: String): String {
+    private fun normalizeOutput(raw: String, customLegend: String = "//"): String {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return ""
 
@@ -167,7 +168,7 @@ class GeminiOcrService(
         data class Block(val order: Int?, val prefix: String?, val builder: StringBuilder, val originalIndex: Int)
 
         val blockRegex = Regex("^\\[BLOCK\\s*(\\d+)]\\s*(.*)$", RegexOption.IGNORE_CASE)
-        val prefixes = listOf("()", "[]", "//", "''")
+        val prefixes = listOf("()", "[]", customLegend, "''")
         val blocks = mutableListOf<Block>()
         var lastBlock: Block? = null
 
