@@ -11,7 +11,7 @@ data class GeminiRequest(
 @Serializable
 data class GeminiContent(
     val role: String = "user",
-    val parts: List<GeminiPart>
+    val parts: List<GeminiPart> = emptyList()
 )
 
 @Serializable
