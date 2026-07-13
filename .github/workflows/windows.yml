@@ -1,0 +1,31 @@
+name: Build Windows EXE
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Windows EXE Installer
+        run: gradle -p Windows packageExe
+
+      - name: Upload Windows EXE Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AstralOCR-Windows-Installer
+          path: Windows/build/compose/binaries/main*/exe/*.exe
+          if-no-files-found: error
