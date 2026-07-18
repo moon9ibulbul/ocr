@@ -39,7 +39,8 @@ class MainViewModel(
         val customLegend: String = "//",
         val legendBubbleRound: String = "()",
         val legendBubbleSquare: String = "[]",
-        val legendOutside: String = "''"
+        val legendOutside: String = "''",
+        val ocrHistory: List<com.astral.ocr.data.OcrHistoryItem> = emptyList()
     )
 
     private val mutableResults = MutableStateFlow<List<OcrResult>>(emptyList())
@@ -63,6 +64,7 @@ class MainViewModel(
         settingsRepository.legendBubbleRound,
         settingsRepository.legendBubbleSquare,
         settingsRepository.legendOutside,
+        settingsRepository.ocrHistory,
         mutableProcessing,
         mutableResults,
         mutableBulkMode,
@@ -78,11 +80,12 @@ class MainViewModel(
         val legendBubbleRound = values[6] as String
         val legendBubbleSquare = values[7] as String
         val legendOutside = values[8] as String
-        val processing = values[9] as Boolean
-        val results = values[10] as List<OcrResult>
-        val bulk = values[11] as Boolean
-        val saved = values[12] as String?
-        val progress = values[13] as String?
+        val ocrHistory = values[9] as List<com.astral.ocr.data.OcrHistoryItem>
+        val processing = values[10] as Boolean
+        val results = values[11] as List<OcrResult>
+        val bulk = values[12] as Boolean
+        val saved = values[13] as String?
+        val progress = values[14] as String?
 
         UiState(
             apiKey = apiKey,
@@ -98,7 +101,8 @@ class MainViewModel(
             customLegend = if (customLegend.isBlank()) "//" else customLegend,
             legendBubbleRound = if (legendBubbleRound.isBlank()) "()" else legendBubbleRound,
             legendBubbleSquare = if (legendBubbleSquare.isBlank()) "[]" else legendBubbleSquare,
-            legendOutside = if (legendOutside.isBlank()) "''" else legendOutside
+            legendOutside = if (legendOutside.isBlank()) "''" else legendOutside,
+            ocrHistory = ocrHistory
         )
     }.stateIn(scope, SharingStarted.Eagerly, UiState())
 
@@ -158,6 +162,30 @@ class MainViewModel(
     fun updateLegendOutside(value: String) {
         scope.launch {
             settingsRepository.updateLegendOutside(value)
+        }
+    }
+
+    fun clearHistory() {
+        scope.launch {
+            settingsRepository.updateOcrHistory(emptyList())
+        }
+    }
+
+    fun addHistoryItem(text: String) {
+        if (text.isBlank()) return
+        scope.launch {
+            val historyList = uiState.value.ocrHistory.toMutableList()
+            val timestamp = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+            val newItem = com.astral.ocr.data.OcrHistoryItem(
+                id = java.util.UUID.randomUUID().toString(),
+                timestamp = timestamp,
+                text = text
+            )
+            historyList.add(0, newItem)
+            while (historyList.size > 50) {
+                historyList.removeAt(historyList.lastIndex)
+            }
+            settingsRepository.updateOcrHistory(historyList)
         }
     }
 
@@ -275,6 +303,10 @@ class MainViewModel(
                 )
             }
             mutableResults.value = newResults
+            if (newResults.isNotEmpty()) {
+                val combinedText = newResults.joinToString(separator = "\n\n") { it.processedText }
+                addHistoryItem(combinedText)
+            }
         } finally {
             mutableProgress.value = null
             mutableProcessing.value = false

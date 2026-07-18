@@ -19,7 +19,8 @@ data class SettingsData(
     val customLegend: String = "//",
     val legendBubbleRound: String = "()",
     val legendBubbleSquare: String = "[]",
-    val legendOutside: String = "''"
+    val legendOutside: String = "''",
+    val ocrHistory: List<OcrHistoryItem> = emptyList()
 )
 
 class SettingsRepository {
@@ -38,6 +39,7 @@ class SettingsRepository {
     val legendBubbleRound: Flow<String> = _settings.map { it.legendBubbleRound }
     val legendBubbleSquare: Flow<String> = _settings.map { it.legendBubbleSquare }
     val legendOutside: Flow<String> = _settings.map { it.legendOutside }
+    val ocrHistory: Flow<List<OcrHistoryItem>> = _settings.map { it.ocrHistory }
 
     private fun loadSettings(): SettingsData {
         return try {
@@ -111,6 +113,12 @@ class SettingsRepository {
 
     suspend fun updateLegendOutside(value: String) {
         val newSettings = _settings.value.copy(legendOutside = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updateOcrHistory(value: List<OcrHistoryItem>) {
+        val newSettings = _settings.value.copy(ocrHistory = value)
         _settings.value = newSettings
         saveSettings(newSettings)
     }

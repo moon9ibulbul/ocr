@@ -24,6 +24,7 @@ class SettingsRepository(private val context: Context) {
         val legendBubbleRound = stringPreferencesKey("legend_bubble_round")
         val legendBubbleSquare = stringPreferencesKey("legend_bubble_square")
         val legendOutside = stringPreferencesKey("legend_outside")
+        val ocrHistory = stringPreferencesKey("ocr_history")
     }
 
     val apiKey: Flow<String> = context.dataStore.data.map { it[Keys.apiKey].orEmpty() }
@@ -35,6 +36,7 @@ class SettingsRepository(private val context: Context) {
     val legendBubbleRound: Flow<String> = context.dataStore.data.map { it[Keys.legendBubbleRound].orEmpty().ifBlank { "()" } }
     val legendBubbleSquare: Flow<String> = context.dataStore.data.map { it[Keys.legendBubbleSquare].orEmpty().ifBlank { "[]" } }
     val legendOutside: Flow<String> = context.dataStore.data.map { it[Keys.legendOutside].orEmpty().ifBlank { "''" } }
+    val ocrHistory: Flow<String> = context.dataStore.data.map { it[Keys.ocrHistory].orEmpty().ifBlank { "[]" } }
 
     suspend fun updateApiKey(value: String) {
         context.dataStore.edit { prefs ->
@@ -87,6 +89,12 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateLegendOutside(value: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.legendOutside] = value
+        }
+    }
+
+    suspend fun updateOcrHistory(value: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.ocrHistory] = value
         }
     }
 }
