@@ -131,7 +131,16 @@ fun AstralApp(
                         onCustomLegendChanged = viewModel::updateCustomLegend,
                         onLegendBubbleRoundChanged = viewModel::updateLegendBubbleRound,
                         onLegendBubbleSquareChanged = viewModel::updateLegendBubbleSquare,
-                        onLegendOutsideChanged = viewModel::updateLegendOutside
+                        onLegendOutsideChanged = viewModel::updateLegendOutside,
+                        onClearHistory = viewModel::clearHistory,
+                        onSaveHistoryItem = { filename, content ->
+                            createDocument(filename) { uri ->
+                                uri?.let {
+                                    saveTextToUri(context.contentResolver, it, content)
+                                    viewModel.setLastSavedPath(it.toString())
+                                }
+                            }
+                        }
                     )
                 }
             }

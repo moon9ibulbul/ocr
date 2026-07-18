@@ -154,6 +154,107 @@ fun main() = application {
                 }
             }
         }
+
+        // HISTORY CONFIGURATION / VIEW
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF14143C).copy(alpha = 0.85f)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Riwayat OCR",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = StellarPink
+                    )
+
+                    if (uiState.ocrHistory.isNotEmpty()) {
+                        Button(
+                            onClick = { viewModel.clearHistory() },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Bersihkan Riwayat", modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Hapus Riwayat")
+                        }
+                    }
+                }
+
+                if (uiState.ocrHistory.isEmpty()) {
+                    Text(
+                        text = "Belum ada riwayat pemrosesan.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.4f)
+                    )
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        uiState.ocrHistory.forEach { historyItem ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1F1F4D).copy(alpha = 0.6f)),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = historyItem.timestamp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AuroraCyan,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = historyItem.text,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.8f),
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            val sanitizedDate = historyItem.timestamp.replace(" ", "_").replace(":", "-")
+                                            val defaultFilename = "ocr_history_$sanitizedDate.txt"
+                                            val saveFile = saveFileDialog(defaultFilename = defaultFilename)
+                                            if (saveFile != null) {
+                                                val finalFile = if (saveFile.name.lowercase().endsWith(".txt")) {
+                                                    saveFile
+                                                } else {
+                                                    File(saveFile.parent, saveFile.name + ".txt")
+                                                }
+                                                try {
+                                                    finalFile.writeText(historyItem.text)
+                                                    viewModel.setLastSavedPath(finalFile.absolutePath)
+                                                } catch (e: Exception) {
+                                                    e.printStackTrace()
+                                                }
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.FileDownload,
+                                            contentDescription = "Unduh Ulang",
+                                            tint = AuroraCyan
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -611,6 +712,107 @@ fun SettingsScreen(
             fontWeight = FontWeight.Bold,
             color = AuroraCyan
         )
+
+        // HISTORY CONFIGURATION / VIEW
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF14143C).copy(alpha = 0.85f)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Riwayat OCR",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = StellarPink
+                    )
+
+                    if (uiState.ocrHistory.isNotEmpty()) {
+                        Button(
+                            onClick = { viewModel.clearHistory() },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Bersihkan Riwayat", modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Hapus Riwayat")
+                        }
+                    }
+                }
+
+                if (uiState.ocrHistory.isEmpty()) {
+                    Text(
+                        text = "Belum ada riwayat pemrosesan.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.4f)
+                    )
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        uiState.ocrHistory.forEach { historyItem ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1F1F4D).copy(alpha = 0.6f)),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = historyItem.timestamp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AuroraCyan,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = historyItem.text,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.8f),
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            val sanitizedDate = historyItem.timestamp.replace(" ", "_").replace(":", "-")
+                                            val defaultFilename = "ocr_history_$sanitizedDate.txt"
+                                            val saveFile = saveFileDialog(defaultFilename = defaultFilename)
+                                            if (saveFile != null) {
+                                                val finalFile = if (saveFile.name.lowercase().endsWith(".txt")) {
+                                                    saveFile
+                                                } else {
+                                                    File(saveFile.parent, saveFile.name + ".txt")
+                                                }
+                                                try {
+                                                    finalFile.writeText(historyItem.text)
+                                                    viewModel.setLastSavedPath(finalFile.absolutePath)
+                                                } catch (e: Exception) {
+                                                    e.printStackTrace()
+                                                }
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.FileDownload,
+                                            contentDescription = "Unduh Ulang",
+                                            tint = AuroraCyan
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // API CONFIGURATION
         Card(
