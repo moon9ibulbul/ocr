@@ -119,4 +119,38 @@ class GeminiNormalizationTest {
 
         assertEquals(expected, result)
     }
+
+    @Test
+    fun testNormalizeOutputSanitizesLiteralNewlines() {
+        val ocrService = GeminiOcrService()
+        val rawOutput = """
+            [BLOCK 1] () Halo!\n\n
+            [BLOCK 2] [] Narasi\nkotak.
+            [BLOCK 3] // *sfx\rcrash*
+            [BLOCK 4] '' Teks luar bubble.\n
+        """.trimIndent()
+
+        val normalizeMethod: Method = GeminiOcrService::class.java.getDeclaredMethod(
+            "normalizeOutput",
+            String::class.java,
+            String::class.java,
+            String::class.java,
+            String::class.java,
+            String::class.java,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType
+        ).apply { isAccessible = true }
+
+        val result = normalizeMethod.invoke(ocrService, rawOutput, "//", "()", "[]", "''", true, true, true, true) as String
+        val expected = """
+            () : Halo!
+            [] : Narasi kotak.
+            // : *sfx crash*
+            '' : Teks luar bubble.
+        """.trimIndent()
+
+        assertEquals(expected, result)
+    }
 }

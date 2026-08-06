@@ -158,7 +158,7 @@ class GeminiOcrService(
               [BLOCK 1] $legendBubbleRound Halo apa kabar?
               [BLOCK 2] $legendBubbleSquare Ini contoh narasi.
               [BLOCK 3] $customLegend *tap tap*
-              [BLOCK 4] $legendOutside Catatan editor\n\n
+              [BLOCK 4] $legendOutside Catatan editor
             Aturan tambahan:
             - Urutkan teks sesuai instruksi posisi, jangan mengubah urutan dialog seenaknya.
             - Jangan menggabungkan bubble berbeda menjadi satu kalimat jika posisinya terpisah.
@@ -270,7 +270,11 @@ class GeminiOcrService(
 
         return sorted.mapNotNull { block ->
             val prefix = block.prefix
-            val text = block.builder.toString().trim()
+            val text = block.builder.toString()
+                .replace("\\n", " ")
+                .replace("\\r", " ")
+                .replace(Regex("\\s+"), " ")
+                .trim()
             if (text.isBlank()) return@mapNotNull null
 
             if (prefix != null) {
