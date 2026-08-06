@@ -23,10 +23,14 @@ class GeminiNormalizationTest {
             String::class.java,
             String::class.java,
             String::class.java,
-            String::class.java
+            String::class.java,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType
         ).apply { isAccessible = true }
 
-        val result = normalizeMethod.invoke(ocrService, rawOutput, "//", "()", "[]", "''") as String
+        val result = normalizeMethod.invoke(ocrService, rawOutput, "//", "()", "[]", "''", true, true, true, true) as String
         val expected = """
             () : Halo!
             [] : Narasi kotak.
@@ -53,7 +57,11 @@ class GeminiNormalizationTest {
             String::class.java,
             String::class.java,
             String::class.java,
-            String::class.java
+            String::class.java,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType
         ).apply { isAccessible = true }
 
         val result = normalizeMethod.invoke(
@@ -62,7 +70,11 @@ class GeminiNormalizationTest {
             "SFX_EFFECT",
             "(B_ROUND)",
             "[B_SQUARE]",
-            "OUTSIDE_TEXT"
+            "OUTSIDE_TEXT",
+            true,
+            true,
+            true,
+            true
         ) as String
 
         val expected = """
@@ -70,6 +82,39 @@ class GeminiNormalizationTest {
             [B_SQUARE] : Narasi kotak.
             SFX_EFFECT : *sfx crash*
             OUTSIDE_TEXT : Teks luar bubble.
+        """.trimIndent()
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testNormalizeOutputWithFilters() {
+        val ocrService = GeminiOcrService()
+        val rawOutput = """
+            [BLOCK 1] () Halo!
+            [BLOCK 2] [] Narasi kotak.
+            [BLOCK 3] // *sfx crash*
+            [BLOCK 4] '' Teks luar bubble.
+        """.trimIndent()
+
+        val normalizeMethod: Method = GeminiOcrService::class.java.getDeclaredMethod(
+            "normalizeOutput",
+            String::class.java,
+            String::class.java,
+            String::class.java,
+            String::class.java,
+            String::class.java,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType
+        ).apply { isAccessible = true }
+
+        // Filter out Bubble Square and Outside Bubble, keeping Bubble Round and SFX
+        val result = normalizeMethod.invoke(ocrService, rawOutput, "//", "()", "[]", "''", true, false, true, false) as String
+        val expected = """
+            () : Halo!
+            // : *sfx crash*
         """.trimIndent()
 
         assertEquals(expected, result)

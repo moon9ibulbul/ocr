@@ -25,6 +25,11 @@ class SettingsRepository(private val context: Context) {
         val legendBubbleSquare = stringPreferencesKey("legend_bubble_square")
         val legendOutside = stringPreferencesKey("legend_outside")
         val ocrHistory = stringPreferencesKey("ocr_history")
+        val batchSize = intPreferencesKey("batch_size")
+        val includeBubbleRound = booleanPreferencesKey("include_bubble_round")
+        val includeBubbleSquare = booleanPreferencesKey("include_bubble_square")
+        val includeSFX = booleanPreferencesKey("include_sfx")
+        val includeOutside = booleanPreferencesKey("include_outside")
     }
 
     val apiKey: Flow<String> = context.dataStore.data.map { it[Keys.apiKey].orEmpty() }
@@ -37,6 +42,41 @@ class SettingsRepository(private val context: Context) {
     val legendBubbleSquare: Flow<String> = context.dataStore.data.map { it[Keys.legendBubbleSquare].orEmpty().ifBlank { "[]" } }
     val legendOutside: Flow<String> = context.dataStore.data.map { it[Keys.legendOutside].orEmpty().ifBlank { "''" } }
     val ocrHistory: Flow<String> = context.dataStore.data.map { it[Keys.ocrHistory].orEmpty().ifBlank { "[]" } }
+    val batchSize: Flow<Int> = context.dataStore.data.map { it[Keys.batchSize] ?: 5 }
+    val includeBubbleRound: Flow<Boolean> = context.dataStore.data.map { it[Keys.includeBubbleRound] ?: true }
+    val includeBubbleSquare: Flow<Boolean> = context.dataStore.data.map { it[Keys.includeBubbleSquare] ?: true }
+    val includeSFX: Flow<Boolean> = context.dataStore.data.map { it[Keys.includeSFX] ?: true }
+    val includeOutside: Flow<Boolean> = context.dataStore.data.map { it[Keys.includeOutside] ?: true }
+
+    suspend fun updateBatchSize(value: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.batchSize] = value
+        }
+    }
+
+    suspend fun updateIncludeBubbleRound(value: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.includeBubbleRound] = value
+        }
+    }
+
+    suspend fun updateIncludeBubbleSquare(value: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.includeBubbleSquare] = value
+        }
+    }
+
+    suspend fun updateIncludeSFX(value: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.includeSFX] = value
+        }
+    }
+
+    suspend fun updateIncludeOutside(value: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.includeOutside] = value
+        }
+    }
 
     suspend fun updateApiKey(value: String) {
         context.dataStore.edit { prefs ->

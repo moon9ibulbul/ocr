@@ -132,6 +132,11 @@ fun AstralApp(
                         onLegendBubbleRoundChanged = viewModel::updateLegendBubbleRound,
                         onLegendBubbleSquareChanged = viewModel::updateLegendBubbleSquare,
                         onLegendOutsideChanged = viewModel::updateLegendOutside,
+                        onBatchSizeChanged = viewModel::updateBatchSize,
+                        onIncludeBubbleRoundChanged = viewModel::updateIncludeBubbleRound,
+                        onIncludeBubbleSquareChanged = viewModel::updateIncludeBubbleSquare,
+                        onIncludeSFXChanged = viewModel::updateIncludeSFX,
+                        onIncludeOutsideChanged = viewModel::updateIncludeOutside,
                         onClearHistory = viewModel::clearHistory,
                         onSaveHistoryItem = { filename, content ->
                             createDocument(filename) { uri ->
