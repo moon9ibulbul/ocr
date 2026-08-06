@@ -44,7 +44,12 @@ class MainViewModel(
         val legendBubbleRound: String = "()",
         val legendBubbleSquare: String = "[]",
         val legendOutside: String = "''",
-        val ocrHistory: List<com.astral.ocr.data.OcrHistoryItem> = emptyList()
+        val ocrHistory: List<com.astral.ocr.data.OcrHistoryItem> = emptyList(),
+        val batchSize: Int = 5,
+        val includeBubbleRound: Boolean = true,
+        val includeBubbleSquare: Boolean = true,
+        val includeSFX: Boolean = true,
+        val includeOutside: Boolean = true
     )
 
     private val mutableResults = MutableStateFlow<List<OcrResult>>(emptyList())
@@ -69,6 +74,11 @@ class MainViewModel(
         settingsRepository.legendBubbleSquare,
         settingsRepository.legendOutside,
         settingsRepository.ocrHistory,
+        settingsRepository.batchSize,
+        settingsRepository.includeBubbleRound,
+        settingsRepository.includeBubbleSquare,
+        settingsRepository.includeSFX,
+        settingsRepository.includeOutside,
         mutableProcessing,
         mutableResults,
         mutableBulkMode,
@@ -85,11 +95,16 @@ class MainViewModel(
         val legendBubbleSquare = values[7] as String
         val legendOutside = values[8] as String
         val ocrHistoryStr = values[9] as String
-        val processing = values[10] as Boolean
-        val results = values[11] as List<OcrResult>
-        val bulk = values[12] as Boolean
-        val saved = values[13] as String?
-        val progress = values[14] as String?
+        val batchSizeVal = values[10] as Int
+        val includeBubbleRoundVal = values[11] as Boolean
+        val includeBubbleSquareVal = values[12] as Boolean
+        val includeSFXVal = values[13] as Boolean
+        val includeOutsideVal = values[14] as Boolean
+        val processing = values[15] as Boolean
+        val results = values[16] as List<OcrResult>
+        val bulk = values[17] as Boolean
+        val saved = values[18] as String?
+        val progress = values[19] as String?
 
         val historyList = try {
             kotlinx.serialization.json.Json.decodeFromString<List<com.astral.ocr.data.OcrHistoryItem>>(ocrHistoryStr)
@@ -112,7 +127,12 @@ class MainViewModel(
             legendBubbleRound = if (legendBubbleRound.isBlank()) "()" else legendBubbleRound,
             legendBubbleSquare = if (legendBubbleSquare.isBlank()) "[]" else legendBubbleSquare,
             legendOutside = if (legendOutside.isBlank()) "''" else legendOutside,
-            ocrHistory = historyList
+            ocrHistory = historyList,
+            batchSize = batchSizeVal,
+            includeBubbleRound = includeBubbleRoundVal,
+            includeBubbleSquare = includeBubbleSquareVal,
+            includeSFX = includeSFXVal,
+            includeOutside = includeOutsideVal
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState())
 
@@ -176,6 +196,36 @@ class MainViewModel(
     fun updateLegendOutside(value: String) {
         viewModelScope.launch {
             settingsRepository.updateLegendOutside(value)
+        }
+    }
+
+    fun updateBatchSize(value: Int) {
+        viewModelScope.launch {
+            settingsRepository.updateBatchSize(value)
+        }
+    }
+
+    fun updateIncludeBubbleRound(value: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateIncludeBubbleRound(value)
+        }
+    }
+
+    fun updateIncludeBubbleSquare(value: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateIncludeBubbleSquare(value)
+        }
+    }
+
+    fun updateIncludeSFX(value: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateIncludeSFX(value)
+        }
+    }
+
+    fun updateIncludeOutside(value: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateIncludeOutside(value)
         }
     }
 
@@ -272,7 +322,12 @@ class MainViewModel(
                     customLegend = uiState.value.customLegend,
                     legendBubbleRound = uiState.value.legendBubbleRound,
                     legendBubbleSquare = uiState.value.legendBubbleSquare,
-                    legendOutside = uiState.value.legendOutside
+                    legendOutside = uiState.value.legendOutside,
+                    batchSize = uiState.value.batchSize,
+                    includeBubbleRound = uiState.value.includeBubbleRound,
+                    includeBubbleSquare = uiState.value.includeBubbleSquare,
+                    includeSFX = uiState.value.includeSFX,
+                    includeOutside = uiState.value.includeOutside
                 )
                 result.fold(
                     onSuccess = { text ->

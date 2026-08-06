@@ -20,7 +20,12 @@ data class SettingsData(
     val legendBubbleRound: String = "()",
     val legendBubbleSquare: String = "[]",
     val legendOutside: String = "''",
-    val ocrHistory: List<OcrHistoryItem> = emptyList()
+    val ocrHistory: List<OcrHistoryItem> = emptyList(),
+    val batchSize: Int = 5,
+    val includeBubbleRound: Boolean = true,
+    val includeBubbleSquare: Boolean = true,
+    val includeSFX: Boolean = true,
+    val includeOutside: Boolean = true
 )
 
 class SettingsRepository {
@@ -40,6 +45,11 @@ class SettingsRepository {
     val legendBubbleSquare: Flow<String> = _settings.map { it.legendBubbleSquare }
     val legendOutside: Flow<String> = _settings.map { it.legendOutside }
     val ocrHistory: Flow<List<OcrHistoryItem>> = _settings.map { it.ocrHistory }
+    val batchSize: Flow<Int> = _settings.map { it.batchSize }
+    val includeBubbleRound: Flow<Boolean> = _settings.map { it.includeBubbleRound }
+    val includeBubbleSquare: Flow<Boolean> = _settings.map { it.includeBubbleSquare }
+    val includeSFX: Flow<Boolean> = _settings.map { it.includeSFX }
+    val includeOutside: Flow<Boolean> = _settings.map { it.includeOutside }
 
     private fun loadSettings(): SettingsData {
         return try {
@@ -119,6 +129,36 @@ class SettingsRepository {
 
     suspend fun updateOcrHistory(value: List<OcrHistoryItem>) {
         val newSettings = _settings.value.copy(ocrHistory = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updateBatchSize(value: Int) {
+        val newSettings = _settings.value.copy(batchSize = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updateIncludeBubbleRound(value: Boolean) {
+        val newSettings = _settings.value.copy(includeBubbleRound = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updateIncludeBubbleSquare(value: Boolean) {
+        val newSettings = _settings.value.copy(includeBubbleSquare = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updateIncludeSFX(value: Boolean) {
+        val newSettings = _settings.value.copy(includeSFX = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updateIncludeOutside(value: Boolean) {
+        val newSettings = _settings.value.copy(includeOutside = value)
         _settings.value = newSettings
         saveSettings(newSettings)
     }

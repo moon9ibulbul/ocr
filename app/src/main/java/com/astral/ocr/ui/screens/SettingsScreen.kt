@@ -40,6 +40,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.astral.ocr.MainViewModel
 import com.astral.ocr.data.MIN_SEGMENT_HEIGHT
+import androidx.compose.material3.Checkbox
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +57,11 @@ fun SettingsScreen(
     onLegendBubbleRoundChanged: (String) -> Unit,
     onLegendBubbleSquareChanged: (String) -> Unit,
     onLegendOutsideChanged: (String) -> Unit,
+    onBatchSizeChanged: (Int) -> Unit,
+    onIncludeBubbleRoundChanged: (Boolean) -> Unit,
+    onIncludeBubbleSquareChanged: (Boolean) -> Unit,
+    onIncludeSFXChanged: (Boolean) -> Unit,
+    onIncludeOutsideChanged: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
     onSaveHistoryItem: (String, String) -> Unit
 ) {
@@ -68,6 +74,11 @@ fun SettingsScreen(
     val legendBubbleRoundState = remember(uiState.legendBubbleRound) { mutableStateOf(uiState.legendBubbleRound) }
     val legendBubbleSquareState = remember(uiState.legendBubbleSquare) { mutableStateOf(uiState.legendBubbleSquare) }
     val legendOutsideState = remember(uiState.legendOutside) { mutableStateOf(uiState.legendOutside) }
+    val batchSizeState = remember(uiState.batchSize) { mutableStateOf(uiState.batchSize.toString()) }
+    val includeBubbleRoundState = remember(uiState.includeBubbleRound) { mutableStateOf(uiState.includeBubbleRound) }
+    val includeBubbleSquareState = remember(uiState.includeBubbleSquare) { mutableStateOf(uiState.includeBubbleSquare) }
+    val includeSFXState = remember(uiState.includeSFX) { mutableStateOf(uiState.includeSFX) }
+    val includeOutsideState = remember(uiState.includeOutside) { mutableStateOf(uiState.includeOutside) }
 
     Column(
         modifier = Modifier
@@ -191,6 +202,58 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        OutlinedTextField(
+            value = batchSizeState.value,
+            onValueChange = { input ->
+                batchSizeState.value = input.filter { it.isDigit() }
+            },
+            label = { Text("Batch Size (segmen per batch)") },
+            placeholder = { Text("5") },
+            supportingText = { Text("Default: 5") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+
+        Text(
+            text = "Sertakan Legend di Output:",
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = includeBubbleRoundState.value,
+                onCheckedChange = { includeBubbleRoundState.value = it }
+            )
+            Text("Bubble Bulat")
+            Spacer(modifier = Modifier.width(16.dp))
+            Checkbox(
+                checked = includeBubbleSquareState.value,
+                onCheckedChange = { includeBubbleSquareState.value = it }
+            )
+            Text("Bubble Kotak")
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = includeSFXState.value,
+                onCheckedChange = { includeSFXState.value = it }
+            )
+            Text("SFX")
+            Spacer(modifier = Modifier.width(76.dp))
+            Checkbox(
+                checked = includeOutsideState.value,
+                onCheckedChange = { includeOutsideState.value = it }
+            )
+            Text("Luar Bubble")
+        }
+
         Button(onClick = {
             onApiKeyChanged(apiKeyState.value)
             onModelChanged(modelState.value)
@@ -203,6 +266,12 @@ fun SettingsScreen(
             onLegendBubbleRoundChanged(legendBubbleRoundState.value)
             onLegendBubbleSquareChanged(legendBubbleSquareState.value)
             onLegendOutsideChanged(legendOutsideState.value)
+            val parsedBatchSize = batchSizeState.value.toIntOrNull()?.coerceAtLeast(1) ?: 5
+            onBatchSizeChanged(parsedBatchSize)
+            onIncludeBubbleRoundChanged(includeBubbleRoundState.value)
+            onIncludeBubbleSquareChanged(includeBubbleSquareState.value)
+            onIncludeSFXChanged(includeSFXState.value)
+            onIncludeOutsideChanged(includeOutsideState.value)
             onBack()
         }) {
             Text("Simpan")

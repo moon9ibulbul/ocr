@@ -46,7 +46,12 @@ class GeminiOcrService(
         customLegend: String = "//",
         legendBubbleRound: String = "()",
         legendBubbleSquare: String = "[]",
-        legendOutside: String = "''"
+        legendOutside: String = "''",
+        batchSize: Int = 5,
+        includeBubbleRound: Boolean = true,
+        includeBubbleSquare: Boolean = true,
+        includeSFX: Boolean = true,
+        includeOutside: Boolean = true
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank() || model.isBlank()) {
             return@withContext Result.failure(IllegalStateException("API key dan model harus diisi pada pengaturan."))
@@ -71,21 +76,37 @@ class GeminiOcrService(
         val segmentResults = mutableListOf<OcrSegmentResult>()
         val totalSegments = segments.size
 
-        segments.forEachIndexed { index, segment ->
-            onProgress("Gambar ${pageIndex + 1}/$totalPages, segmen ${index + 1}/$totalSegments")
+        val chunkedSegments = segments.withIndex().chunked(batchSize)
+        val totalBatches = chunkedSegments.size
 
-            val prompt = buildPrompt(index + 1, totalSegments, customLegend, legendBubbleRound, legendBubbleSquare, legendOutside)
-            val base64 = encodeBitmap(segment)
+        chunkedSegments.forEachIndexed { batchIdx, indexedSegments ->
+            val startIdx = indexedSegments.first().index
+            val endIdx = indexedSegments.last().index
+            val segmentRangeStr = if (indexedSegments.size == 1) "${startIdx + 1}" else "${startIdx + 1}-${endIdx + 1}"
+            onProgress("Gambar ${pageIndex + 1}/$totalPages, segmen $segmentRangeStr/$totalSegments")
 
-            val response = requestWithRetry(apiKey, model, payloadMimeType, base64, prompt, apiProvider = apiProvider)
+            val prompt = buildBatchPrompt(startIdx + 1, endIdx + 1, totalSegments, customLegend, legendBubbleRound, legendBubbleSquare, legendOutside)
+            val base64s = indexedSegments.map { encodeBitmap(it.value) }
+
+            val response = requestWithRetry(apiKey, model, payloadMimeType, base64s, prompt, apiProvider = apiProvider)
             response.fold(
                 onSuccess = { raw ->
                     segmentResults.add(
                         OcrSegmentResult(
                             pageIndex = pageIndex,
-                            segmentIndex = index,
-                            totalSegments = totalSegments,
-                            rawText = normalizeOutput(raw, customLegend, legendBubbleRound, legendBubbleSquare, legendOutside)
+                            segmentIndex = batchIdx,
+                            totalSegments = totalBatches,
+                            rawText = normalizeOutput(
+                                raw,
+                                customLegend,
+                                legendBubbleRound,
+                                legendBubbleSquare,
+                                legendOutside,
+                                includeBubbleRound,
+                                includeBubbleSquare,
+                                includeSFX,
+                                includeOutside
+                            )
                         )
                     )
                 },
@@ -109,21 +130,23 @@ class GeminiOcrService(
         }
     }
 
-    private fun buildPrompt(
-        segmentIndex: Int,
+    private fun buildBatchPrompt(
+        startSegment: Int,
+        endSegment: Int,
         totalSegments: Int,
         customLegend: String = "//",
         legendBubbleRound: String = "()",
         legendBubbleSquare: String = "[]",
         legendOutside: String = "''"
-    ): String =
-        """
-            Kamu adalah asisten OCR khusus untuk manhwa. Gambar ini adalah SEGMENT ${segmentIndex}/$totalSegments dari halaman komik panjang yang dipotong secara vertikal.
-            Hanya baca teks yang benar-benar terlihat pada segmen ini, jangan menebak kelanjutan di luar gambar.\n\n
-            PENTING: Jika segmen gambar ini kosong, tidak memiliki balon ucapan (speech bubble), tidak memiliki efek suara (SFX), atau tidak memiliki teks sama sekali, kamu HARUS mengembalikan teks "Tidak ada teks yang terdeteksi". Jangan berhalusinasi, jangan menebak dialog, dan jangan mengasumsikan dialog atau cerita sendiri jika gambarnya kosong atau tidak ada teks.
+    ): String {
+        val segmentRange = if (startSegment == endSegment) "SEGMEN $startSegment" else "SEGMEN $startSegment sampai $endSegment"
+        return """
+            Kamu adalah asisten OCR khusus untuk manhwa. Input yang diberikan terdiri dari beberapa segmen gambar berturut-turut ($segmentRange dari total $totalSegments segmen).
+            PENTING: Proses segmen-segmen gambar ini sesuai urutannya. Hanya baca teks yang benar-benar terlihat pada segmen-segmen ini, jangan menebak kelanjutan di luar gambar.
+            Jika segmen gambar ini kosong, tidak memiliki balon ucapan (speech bubble), tidak memiliki efek suara (SFX), atau tidak memiliki teks sama sekali, kamu HARUS mengembalikan teks "Tidak ada teks yang terdeteksi". Jangan berhalusinasi, jangan menebak dialog, dan jangan mengasumsikan dialog atau cerita sendiri jika gambarnya kosong atau tidak ada teks.
 
             Tugas:
-            - Temukan semua teks pada bubble bulat/oval, bubble kotak, efek suara (SFX), dan teks luar bubble.
+            - Temukan semua teks pada bubble bulat/oval, bubble kotak, efek suara (SFX), dan teks luar bubble pada seluruh segmen tersebut secara berurutan.
             - Urutkan berdasarkan posisi visual: dari atas ke bawah, dan jika sejajar secara vertikal, dari kiri ke kanan.
             - Beri nomor setiap blok teks agar urutan mudah diikuti. Gunakan format `[BLOCK n] <tipe> <teks>`.
             - Tipe teks:
@@ -142,13 +165,18 @@ class GeminiOcrService(
             - Gunakan bahasa asli hasil OCR, jangan terjemahkan.
             - Output hanya daftar teks dengan format di atas tanpa penjelasan tambahan.
         """.trimIndent()
+    }
 
     private fun normalizeOutput(
         raw: String,
         customLegend: String = "//",
         legendBubbleRound: String = "()",
         legendBubbleSquare: String = "[]",
-        legendOutside: String = "''"
+        legendOutside: String = "''",
+        includeBubbleRound: Boolean = true,
+        includeBubbleSquare: Boolean = true,
+        includeSFX: Boolean = true,
+        includeOutside: Boolean = true
     ): String {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return ""
@@ -244,6 +272,14 @@ class GeminiOcrService(
             val prefix = block.prefix
             val text = block.builder.toString().trim()
             if (text.isBlank()) return@mapNotNull null
+
+            if (prefix != null) {
+                if (prefix == legendBubbleRound && !includeBubbleRound) return@mapNotNull null
+                if (prefix == legendBubbleSquare && !includeBubbleSquare) return@mapNotNull null
+                if (prefix == customLegend && !includeSFX) return@mapNotNull null
+                if (prefix == legendOutside && !includeOutside) return@mapNotNull null
+            }
+
             if (prefix.isNullOrBlank()) text else "$prefix : $text"
         }.joinToString(separator = "\n")
     }
@@ -260,7 +296,7 @@ class GeminiOcrService(
         apiKey: String,
         model: String,
         mimeType: String,
-        base64: String,
+        base64s: List<String>,
         prompt: String,
         retries: Int = MAX_RETRIES,
         apiProvider: String = "gemini"
@@ -270,18 +306,22 @@ class GeminiOcrService(
 
         while (attempt <= retries) {
             val request = if (apiProvider == "sumopod") {
+                val contentList = mutableListOf<OpenAiContentPart>()
+                contentList.add(OpenAiContentPart(type = "text", text = prompt))
+                base64s.forEach { base64 ->
+                    contentList.add(
+                        OpenAiContentPart(
+                            type = "image_url",
+                            imageUrl = OpenAiImageUrl(url = "data:$mimeType;base64,$base64")
+                        )
+                    )
+                }
                 val requestBody = OpenAiRequest(
                     model = model,
                     messages = listOf(
                         OpenAiMessage(
                             role = "user",
-                            content = listOf(
-                                OpenAiContentPart(type = "text", text = prompt),
-                                OpenAiContentPart(
-                                    type = "image_url",
-                                    imageUrl = OpenAiImageUrl(url = "data:$mimeType;base64,$base64")
-                                )
-                            )
+                            content = contentList
                         )
                     ),
                     maxTokens = 2048
@@ -294,18 +334,22 @@ class GeminiOcrService(
                     .post(body)
                     .build()
             } else {
+                val partsList = mutableListOf<GeminiPart>()
+                partsList.add(GeminiPart(text = prompt))
+                base64s.forEach { base64 ->
+                    partsList.add(
+                        GeminiPart(
+                            inlineData = InlineData(
+                                mimeType = mimeType,
+                                data = base64
+                            )
+                        )
+                    )
+                }
                 val requestBody = GeminiRequest(
                     contents = listOf(
                         GeminiContent(
-                            parts = listOf(
-                                GeminiPart(text = prompt),
-                                GeminiPart(
-                                    inlineData = InlineData(
-                                        mimeType = mimeType,
-                                        data = base64
-                                    )
-                                )
-                            )
+                            parts = partsList
                         )
                     )
                 )

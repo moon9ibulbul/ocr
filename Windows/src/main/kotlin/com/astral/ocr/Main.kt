@@ -745,6 +745,78 @@ fun SettingsScreen(
                         )
                     }
                 }
+
+                // Batch Size Field
+                var batchSizeStr by remember { mutableStateOf(uiState.batchSize.toString()) }
+                LaunchedEffect(uiState.batchSize) {
+                    if (batchSizeStr != uiState.batchSize.toString()) {
+                        batchSizeStr = uiState.batchSize.toString()
+                    }
+                }
+
+                OutlinedTextField(
+                    value = batchSizeStr,
+                    onValueChange = { input ->
+                        val filtered = input.filter { it.isDigit() }
+                        batchSizeStr = filtered
+                        val parsed = filtered.toIntOrNull()?.coerceAtLeast(1) ?: 5
+                        viewModel.updateBatchSize(parsed)
+                    },
+                    label = { Text("Batch Size (segmen per batch)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AuroraCyan,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                    )
+                )
+
+                // Filters
+                Text("Sertakan Legend di Output:", fontWeight = FontWeight.SemiBold, color = StellarPink)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = uiState.includeBubbleRound,
+                            onCheckedChange = { viewModel.updateIncludeBubbleRound(it) },
+                            colors = CheckboxDefaults.colors(checkedColor = AuroraCyan)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Bubble Bulat")
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = uiState.includeBubbleSquare,
+                            onCheckedChange = { viewModel.updateIncludeBubbleSquare(it) },
+                            colors = CheckboxDefaults.colors(checkedColor = AuroraCyan)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Bubble Kotak")
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = uiState.includeSFX,
+                            onCheckedChange = { viewModel.updateIncludeSFX(it) },
+                            colors = CheckboxDefaults.colors(checkedColor = AuroraCyan)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("SFX")
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = uiState.includeOutside,
+                            onCheckedChange = { viewModel.updateIncludeOutside(it) },
+                            colors = CheckboxDefaults.colors(checkedColor = AuroraCyan)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Luar Bubble")
+                    }
+                }
             }
         }
 
