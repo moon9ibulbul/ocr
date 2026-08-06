@@ -3,6 +3,7 @@ name: Build Debug APK
 on:
   push:
   pull_request:
+  workflow_dispatch: # Enables the manual trigger button
 
 jobs:
   build:
