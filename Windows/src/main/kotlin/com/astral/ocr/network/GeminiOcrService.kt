@@ -288,9 +288,27 @@ class GeminiOcrService(
         }.joinToString(separator = "\n")
     }
 
-    private fun encodeBufferedImage(image: BufferedImage): String {
+    internal fun encodeBufferedImage(image: BufferedImage): String {
+        val rgbImage = if (image.type == BufferedImage.TYPE_INT_RGB && !image.colorModel.hasAlpha()) {
+            image
+        } else {
+            val converted = BufferedImage(image.width, image.height, BufferedImage.TYPE_INT_RGB)
+            val g = converted.createGraphics()
+            try {
+                g.color = java.awt.Color.WHITE
+                g.fillRect(0, 0, image.width, image.height)
+                g.drawImage(image, 0, 0, null)
+            } finally {
+                g.dispose()
+            }
+            converted
+        }
+
         val stream = ByteArrayOutputStream()
-        ImageIO.write(image, "jpeg", stream)
+        val success = ImageIO.write(rgbImage, "jpeg", stream)
+        if (!success || stream.size() == 0) {
+            throw IOException("Gagal mengodekan gambar ke format JPEG.")
+        }
         val bytes = stream.toByteArray()
         return Base64.getEncoder().encodeToString(bytes)
     }
