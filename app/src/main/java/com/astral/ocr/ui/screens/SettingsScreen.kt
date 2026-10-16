@@ -62,6 +62,8 @@ fun SettingsScreen(
     onIncludeBubbleSquareChanged: (Boolean) -> Unit,
     onIncludeSFXChanged: (Boolean) -> Unit,
     onIncludeOutsideChanged: (Boolean) -> Unit,
+    onComicModeChanged: (String) -> Unit,
+    onMangaLanguageChanged: (String) -> Unit,
     onClearHistory: () -> Unit,
     onSaveHistoryItem: (String, String) -> Unit
 ) {
@@ -79,6 +81,8 @@ fun SettingsScreen(
     val includeBubbleSquareState = remember(uiState.includeBubbleSquare) { mutableStateOf(uiState.includeBubbleSquare) }
     val includeSFXState = remember(uiState.includeSFX) { mutableStateOf(uiState.includeSFX) }
     val includeOutsideState = remember(uiState.includeOutside) { mutableStateOf(uiState.includeOutside) }
+    val comicModeState = remember(uiState.comicMode) { mutableStateOf(uiState.comicMode) }
+    val mangaLanguageState = remember(uiState.mangaLanguage) { mutableStateOf(uiState.mangaLanguage) }
 
     Column(
         modifier = Modifier
@@ -117,6 +121,60 @@ fun SettingsScreen(
                     }
                 ) {
                     Text(label)
+                }
+            }
+        }
+
+        Text(
+            text = "Mode Komik:",
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("manhwa" to "Mode Manhwa", "manga" to "Mode Manga").forEach { (id, label) ->
+                Button(
+                    onClick = { comicModeState.value = id },
+                    modifier = Modifier.weight(1f),
+                    colors = if (comicModeState.value == id) {
+                        androidx.compose.material3.ButtonDefaults.buttonColors()
+                    } else {
+                        androidx.compose.material3.ButtonDefaults.filledTonalButtonColors()
+                    }
+                ) {
+                    Text(label)
+                }
+            }
+        }
+
+        if (comicModeState.value == "manga") {
+            Text(
+                text = "Bahasa / Format Manga:",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(
+                    "jp" to "RAW (Jepang/China)",
+                    "en" to "Terjemahan Inggris"
+                ).forEach { (id, label) ->
+                    Button(
+                        onClick = { mangaLanguageState.value = id },
+                        modifier = Modifier.weight(1f),
+                        colors = if (mangaLanguageState.value == id) {
+                            androidx.compose.material3.ButtonDefaults.buttonColors()
+                        } else {
+                            androidx.compose.material3.ButtonDefaults.filledTonalButtonColors()
+                        }
+                    ) {
+                        Text(label, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
         }
@@ -272,6 +330,8 @@ fun SettingsScreen(
             onIncludeBubbleSquareChanged(includeBubbleSquareState.value)
             onIncludeSFXChanged(includeSFXState.value)
             onIncludeOutsideChanged(includeOutsideState.value)
+            onComicModeChanged(comicModeState.value)
+            onMangaLanguageChanged(mangaLanguageState.value)
             onBack()
         }) {
             Text("Simpan")

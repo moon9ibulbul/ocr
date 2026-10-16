@@ -30,6 +30,8 @@ class SettingsRepository(private val context: Context) {
         val includeBubbleSquare = booleanPreferencesKey("include_bubble_square")
         val includeSFX = booleanPreferencesKey("include_sfx")
         val includeOutside = booleanPreferencesKey("include_outside")
+        val comicMode = stringPreferencesKey("comic_mode")
+        val mangaLanguage = stringPreferencesKey("manga_language")
     }
 
     val apiKey: Flow<String> = context.dataStore.data.map { it[Keys.apiKey].orEmpty() }
@@ -47,6 +49,20 @@ class SettingsRepository(private val context: Context) {
     val includeBubbleSquare: Flow<Boolean> = context.dataStore.data.map { it[Keys.includeBubbleSquare] ?: true }
     val includeSFX: Flow<Boolean> = context.dataStore.data.map { it[Keys.includeSFX] ?: true }
     val includeOutside: Flow<Boolean> = context.dataStore.data.map { it[Keys.includeOutside] ?: true }
+    val comicMode: Flow<String> = context.dataStore.data.map { it[Keys.comicMode] ?: "manhwa" }
+    val mangaLanguage: Flow<String> = context.dataStore.data.map { it[Keys.mangaLanguage] ?: "jp" }
+
+    suspend fun updateComicMode(value: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.comicMode] = value
+        }
+    }
+
+    suspend fun updateMangaLanguage(value: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.mangaLanguage] = value
+        }
+    }
 
     suspend fun updateBatchSize(value: Int) {
         context.dataStore.edit { prefs ->
