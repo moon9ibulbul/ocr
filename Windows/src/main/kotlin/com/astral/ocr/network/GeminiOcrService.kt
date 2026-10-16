@@ -49,7 +49,9 @@ class GeminiOcrService(
         includeBubbleRound: Boolean = true,
         includeBubbleSquare: Boolean = true,
         includeSFX: Boolean = true,
-        includeOutside: Boolean = true
+        includeOutside: Boolean = true,
+        comicMode: String = "manhwa",
+        mangaLanguage: String = "jp"
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank() || model.isBlank()) {
             return@withContext Result.failure(IllegalStateException("API key dan model harus diisi pada pengaturan."))
@@ -66,8 +68,9 @@ class GeminiOcrService(
             null
         } ?: return@withContext Result.failure(IOException("Gagal memuat gambar."))
 
+        val effectiveSliceEnabled = if (comicMode == "manga") false else sliceEnabled
         val safeSliceHeight = targetSliceHeight.coerceAtLeast(MIN_SEGMENT_HEIGHT)
-        val segments = if (sliceEnabled && image.height > LONG_PAGE_HEIGHT_THRESHOLD) {
+        val segments = if (effectiveSliceEnabled && image.height > LONG_PAGE_HEIGHT_THRESHOLD) {
             sliceVerticalWithOverlap(image, targetHeight = safeSliceHeight, overlap = SLICE_OVERLAP)
         } else {
             listOf(image)
@@ -85,7 +88,28 @@ class GeminiOcrService(
             val segmentRangeStr = if (indexedSegments.size == 1) "${startIdx + 1}" else "${startIdx + 1}-${endIdx + 1}"
             onProgress("Gambar ${pageIndex + 1}/$totalPages, segmen $segmentRangeStr/$totalSegments")
 
-            val prompt = buildBatchPrompt(startIdx + 1, endIdx + 1, totalSegments, customLegend, legendBubbleRound, legendBubbleSquare, legendOutside)
+            val prompt = if (comicMode == "manga") {
+                buildMangaBatchPrompt(
+                    startIdx + 1,
+                    endIdx + 1,
+                    totalSegments,
+                    customLegend,
+                    legendBubbleRound,
+                    legendBubbleSquare,
+                    legendOutside,
+                    mangaLanguage
+                )
+            } else {
+                buildBatchPrompt(
+                    startIdx + 1,
+                    endIdx + 1,
+                    totalSegments,
+                    customLegend,
+                    legendBubbleRound,
+                    legendBubbleSquare,
+                    legendOutside
+                )
+            }
             val base64s = indexedSegments.map { encodeBufferedImage(it.value) }
 
             val response = requestWithRetry(apiKey, model, payloadMimeType, base64s, prompt, apiProvider = apiProvider)
@@ -128,6 +152,64 @@ class GeminiOcrService(
         } catch (_: Exception) {
             raw
         }
+    }
+
+    private fun buildMangaBatchPrompt(
+        startSegment: Int,
+        endSegment: Int,
+        totalSegments: Int,
+        customLegend: String = "//",
+        legendBubbleRound: String = "()",
+        legendBubbleSquare: String = "[]",
+        legendOutside: String = "''",
+        mangaLanguage: String = "jp"
+    ): String {
+        val languageInstruction = if (mangaLanguage == "en") {
+            """
+            PENTING UNTUK TEKS INGGRIS / TERJEMAHAN:
+            - Teks di dalam balon kata (speech bubble) dan narasi ditulis secara HORIZONTAL dari KIRI ke KANAN, atas ke bawah.
+            - Urutan antar panel (koma) dan antar balon kata TETAP mengikuti alur membaca Manga Jepang: dari KANAN ke KIRI dan ATAS ke BAWAH.
+            """.trimIndent()
+        } else {
+            """
+            PENTING UNTUK MANGA RAW (JEPANG/CHINA):
+            - Arah membaca halaman dan antar panel: dari KANAN ke KIRI dan ATAS ke BAWAH.
+            - Teks di dalam balon kata umumnya ditulis secara VERTIKAL (Tategaki): baca dari ATAS ke BAWAH per kolom, dan dari kolom paling KANAN ke KIRI.
+            - Teks horizontal (Yokogaki) atau SFX dibaca dari kiri ke kanan, atas ke bawah.
+            """.trimIndent()
+        }
+
+        val segmentRange = if (startSegment == endSegment) "SEGMEN $startSegment" else "SEGMEN $startSegment sampai $endSegment"
+        return """
+            Kamu adalah asisten OCR khusus untuk manga. Input yang diberikan adalah halaman manga ($segmentRange dari total $totalSegments segmen).
+            PENTING: Hanya baca teks yang benar-benar terlihat pada gambar ini, jangan menebak kelanjutan di luar gambar.
+            Jika gambar ini kosong, tidak memiliki balon ucapan (speech bubble), tidak memiliki efek suara (SFX), atau tidak memiliki teks sama sekali, kamu HARUS mengembalikan teks "Tidak ada teks yang terdeteksi". Jangan berhalusinasi, jangan menebak dialog, dan jangan mengasumsikan dialog atau cerita sendiri jika gambarnya kosong atau tidak ada teks.
+
+            Aturan Alur Baca Manga (Panel-Aware):
+            $languageInstruction
+
+            Tugas:
+            - Kenali panel-panel (koma) pada halaman dari kanan-atas ke kiri-bawah.
+            - Untuk setiap panel, temukan semua teks pada bubble bulat/oval, bubble kotak, efek suara (SFX), dan teks luar bubble.
+            - Urutkan setiap blok teks berdasarkan posisi visual sesuai alur membaca manga di atas.
+            - Beri nomor setiap blok teks agar urutan mudah diikuti. Gunakan format `[BLOCK n] <tipe> <teks>`.
+            - Tipe teks:
+              * Bubble bulat/oval -> `$legendBubbleRound`
+              * Bubble kotak -> `$legendBubbleSquare`
+              * SFX -> `$customLegend`
+              * Teks luar bubble -> `$legendOutside`
+            - Contoh keluaran:
+              [BLOCK 1] $legendBubbleRound Teks pertama
+              [BLOCK 2] $legendBubbleSquare Narasi
+              [BLOCK 3] $customLegend *swoosh*
+              [BLOCK 4] $legendOutside Teks luar
+
+            Aturan tambahan:
+            - Urutkan teks sesuai instruksi alur baca manga, jangan mengubah urutan dialog seenaknya.
+            - Jangan menggabungkan bubble berbeda menjadi satu kalimat jika posisinya terpisah.
+            - Gunakan bahasa asli hasil OCR, jangan terjemahkan.
+            - Output hanya daftar teks dengan format di atas tanpa penjelasan tambahan.
+        """.trimIndent()
     }
 
     private fun buildBatchPrompt(

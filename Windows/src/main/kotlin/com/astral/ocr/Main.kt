@@ -612,6 +612,75 @@ fun SettingsScreen(
             color = AuroraCyan
         )
 
+        // COMIC MODE CONFIGURATION
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF14143C).copy(alpha = 0.85f)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    text = "Mode Komik",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = StellarPink
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val modes = listOf("manhwa" to "Mode Manhwa", "manga" to "Mode Manga")
+                    modes.forEach { (id, label) ->
+                        val isSelected = uiState.comicMode == id
+                        OutlinedButton(
+                            onClick = { viewModel.updateComicMode(id) },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (isSelected) CosmicPurple.copy(alpha = 0.4f) else Color.Transparent,
+                                contentColor = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f)
+                            ),
+                            border = ButtonDefaults.outlinedButtonBorder.copy(
+                                brush = Brush.linearGradient(
+                                    colors = if (isSelected) listOf(AuroraCyan, StellarPink) else listOf(Color.White.copy(alpha = 0.2f), Color.White.copy(alpha = 0.2f))
+                                )
+                            )
+                        ) {
+                            Text(text = label)
+                        }
+                    }
+                }
+
+                if (uiState.comicMode == "manga") {
+                    Text("Bahasa / Format Manga:", fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val languages = listOf("jp" to "RAW (Jepang/China)", "en" to "Terjemahan Inggris")
+                        languages.forEach { (id, label) ->
+                            val isSelected = uiState.mangaLanguage == id
+                            OutlinedButton(
+                                onClick = { viewModel.updateMangaLanguage(id) },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (isSelected) CosmicPurple.copy(alpha = 0.4f) else Color.Transparent,
+                                    contentColor = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f)
+                                ),
+                                border = ButtonDefaults.outlinedButtonBorder.copy(
+                                    brush = Brush.linearGradient(
+                                        colors = if (isSelected) listOf(AuroraCyan, StellarPink) else listOf(Color.White.copy(alpha = 0.2f), Color.White.copy(alpha = 0.2f))
+                                    )
+                                )
+                            ) {
+                                Text(text = label)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // API CONFIGURATION
         Card(
             modifier = Modifier.fillMaxWidth(),

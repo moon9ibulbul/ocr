@@ -49,7 +49,9 @@ class MainViewModel(
         val includeBubbleRound: Boolean = true,
         val includeBubbleSquare: Boolean = true,
         val includeSFX: Boolean = true,
-        val includeOutside: Boolean = true
+        val includeOutside: Boolean = true,
+        val comicMode: String = "manhwa",
+        val mangaLanguage: String = "jp"
     )
 
     private val mutableResults = MutableStateFlow<List<OcrResult>>(emptyList())
@@ -79,6 +81,8 @@ class MainViewModel(
         settingsRepository.includeBubbleSquare,
         settingsRepository.includeSFX,
         settingsRepository.includeOutside,
+        settingsRepository.comicMode,
+        settingsRepository.mangaLanguage,
         mutableProcessing,
         mutableResults,
         mutableBulkMode,
@@ -100,11 +104,13 @@ class MainViewModel(
         val includeBubbleSquareVal = values[12] as Boolean
         val includeSFXVal = values[13] as Boolean
         val includeOutsideVal = values[14] as Boolean
-        val processing = values[15] as Boolean
-        val results = values[16] as List<OcrResult>
-        val bulk = values[17] as Boolean
-        val saved = values[18] as String?
-        val progress = values[19] as String?
+        val comicModeVal = values[15] as String
+        val mangaLanguageVal = values[16] as String
+        val processing = values[17] as Boolean
+        val results = values[18] as List<OcrResult>
+        val bulk = values[19] as Boolean
+        val saved = values[20] as String?
+        val progress = values[21] as String?
 
         val historyList = try {
             kotlinx.serialization.json.Json.decodeFromString<List<com.astral.ocr.data.OcrHistoryItem>>(ocrHistoryStr)
@@ -132,7 +138,9 @@ class MainViewModel(
             includeBubbleRound = includeBubbleRoundVal,
             includeBubbleSquare = includeBubbleSquareVal,
             includeSFX = includeSFXVal,
-            includeOutside = includeOutsideVal
+            includeOutside = includeOutsideVal,
+            comicMode = comicModeVal,
+            mangaLanguage = mangaLanguageVal
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState())
 
@@ -226,6 +234,18 @@ class MainViewModel(
     fun updateIncludeOutside(value: Boolean) {
         viewModelScope.launch {
             settingsRepository.updateIncludeOutside(value)
+        }
+    }
+
+    fun updateComicMode(value: String) {
+        viewModelScope.launch {
+            settingsRepository.updateComicMode(value)
+        }
+    }
+
+    fun updateMangaLanguage(value: String) {
+        viewModelScope.launch {
+            settingsRepository.updateMangaLanguage(value)
         }
     }
 
@@ -327,7 +347,9 @@ class MainViewModel(
                     includeBubbleRound = uiState.value.includeBubbleRound,
                     includeBubbleSquare = uiState.value.includeBubbleSquare,
                     includeSFX = uiState.value.includeSFX,
-                    includeOutside = uiState.value.includeOutside
+                    includeOutside = uiState.value.includeOutside,
+                    comicMode = uiState.value.comicMode,
+                    mangaLanguage = uiState.value.mangaLanguage
                 )
                 result.fold(
                     onSuccess = { text ->

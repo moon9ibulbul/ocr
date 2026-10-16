@@ -25,7 +25,9 @@ data class SettingsData(
     val includeBubbleRound: Boolean = true,
     val includeBubbleSquare: Boolean = true,
     val includeSFX: Boolean = true,
-    val includeOutside: Boolean = true
+    val includeOutside: Boolean = true,
+    val comicMode: String = "manhwa",
+    val mangaLanguage: String = "jp"
 )
 
 class SettingsRepository {
@@ -50,6 +52,8 @@ class SettingsRepository {
     val includeBubbleSquare: Flow<Boolean> = _settings.map { it.includeBubbleSquare }
     val includeSFX: Flow<Boolean> = _settings.map { it.includeSFX }
     val includeOutside: Flow<Boolean> = _settings.map { it.includeOutside }
+    val comicMode: Flow<String> = _settings.map { it.comicMode }
+    val mangaLanguage: Flow<String> = _settings.map { it.mangaLanguage }
 
     private fun loadSettings(): SettingsData {
         return try {
@@ -159,6 +163,18 @@ class SettingsRepository {
 
     suspend fun updateIncludeOutside(value: Boolean) {
         val newSettings = _settings.value.copy(includeOutside = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updateComicMode(value: String) {
+        val newSettings = _settings.value.copy(comicMode = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updateMangaLanguage(value: String) {
+        val newSettings = _settings.value.copy(mangaLanguage = value)
         _settings.value = newSettings
         saveSettings(newSettings)
     }
