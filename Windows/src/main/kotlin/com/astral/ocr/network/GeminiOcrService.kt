@@ -169,27 +169,33 @@ class GeminiOcrService(
 
             Aturan Alur Baca Manga (Panel-Aware):
             - Arah membaca halaman dan antar panel: dari KANAN ke KIRI dan ATAS ke BAWAH.
+            - BALON UCAPAN / BUBBLE: Jika terdapat beberapa bubble yang sejajar atau berada dalam baris/panel yang sama, WAJIB utamakan membaca bubble dari KANAN ke KIRI terlebih dahulu, bukan dari kiri ke kanan.
             - Teks vertikal (Tategaki): baca dari ATAS ke BAWAH per kolom, dan dari kolom paling KANAN ke KIRI.
             - Teks horizontal (Yokogaki / Bahasa Inggris / Terjemahan): baca dari kiri ke kanan, atas ke bawah.
             - Apabila suatu panel atau bubble memiliki multi bahasa (misal kombinasi Jepang, Inggris, atau bahasa lain), pastikan SEMUA teks dan semua bahasa tetap terdeteksi.
 
             Tugas:
             - Kenali panel-panel (koma) pada halaman dari kanan-atas ke kiri-bawah.
-            - Untuk setiap panel, temukan semua teks pada bubble bulat/oval, bubble kotak, efek suara (SFX), dan teks luar bubble.
-            - Urutkan setiap blok teks berdasarkan posisi visual sesuai alur membaca manga di atas.
+            - Untuk setiap panel atau baris visual, temukan semua teks pada bubble bulat/oval, bubble kotak, efek suara (SFX), dan teks luar bubble.
+            - Urutkan setiap blok teks berdasarkan posisi visual sesuai alur membaca manga (KANAN KE KIRI, atas ke bawah).
             - Beri nomor setiap blok teks agar urutan mudah diikuti. Gunakan format `[BLOCK n] <tipe> <teks>`.
             - Tipe teks:
               * Bubble bulat/oval -> `$legendBubbleRound`
               * Bubble kotak -> `$legendBubbleSquare`
               * SFX -> `$customLegend`
               * Teks luar bubble -> `$legendOutside`
+            - Contoh urutan membaca bubble bersisian (misal dua bubble di bagian atas):
+              * Bubble KANAN ATAS = BLOCK 1
+              * Bubble KIRI ATAS = BLOCK 2
             - Contoh keluaran:
-              [BLOCK 1] $legendBubbleRound Teks pertama
-              [BLOCK 2] $legendBubbleSquare Narasi
-              [BLOCK 3] $customLegend *swoosh*
-              [BLOCK 4] $legendOutside Teks luar
+              [BLOCK 1] $legendBubbleRound Teks kanan atas
+              [BLOCK 2] $legendBubbleRound Teks kiri atas
+              [BLOCK 3] $legendBubbleSquare Narasi
+              [BLOCK 4] $customLegend *swoosh*
+              [BLOCK 5] $legendOutside Teks luar
 
             Aturan tambahan:
+            - SANGAT PENTING: Urutkan dari KANAN KE KIRI untuk bubble/panel yang berada di tingkat/ketinggian yang sama. Jangan pernah mendahulukan bubble sebelah kiri dibanding bubble sebelah kanan.
             - Urutkan teks sesuai instruksi alur baca manga, jangan mengubah urutan dialog seenaknya.
             - Jangan menggabungkan bubble berbeda menjadi satu kalimat jika posisinya terpisah.
             - Gunakan bahasa asli hasil OCR, jangan terjemahkan.
