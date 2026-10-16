@@ -12,7 +12,7 @@ import java.io.File
 @Serializable
 data class SettingsData(
     val apiKey: String = "",
-    val model: String = "gemini-2.0-flash",
+    val model: String = "gemini-3.1-flash-lite",
     val apiProvider: String = "gemini",
     val sliceEnabled: Boolean = true,
     val sliceHeight: Int = 1400,
@@ -21,13 +21,12 @@ data class SettingsData(
     val legendBubbleSquare: String = "[]",
     val legendOutside: String = "''",
     val ocrHistory: List<OcrHistoryItem> = emptyList(),
-    val batchSize: Int = 5,
+    val batchSize: Int = 1,
     val includeBubbleRound: Boolean = true,
     val includeBubbleSquare: Boolean = true,
     val includeSFX: Boolean = true,
     val includeOutside: Boolean = true,
-    val comicMode: String = "manhwa",
-    val mangaLanguage: String = "jp"
+    val comicMode: String = "manhwa"
 )
 
 class SettingsRepository {
@@ -53,7 +52,6 @@ class SettingsRepository {
     val includeSFX: Flow<Boolean> = _settings.map { it.includeSFX }
     val includeOutside: Flow<Boolean> = _settings.map { it.includeOutside }
     val comicMode: Flow<String> = _settings.map { it.comicMode }
-    val mangaLanguage: Flow<String> = _settings.map { it.mangaLanguage }
 
     private fun loadSettings(): SettingsData {
         return try {
@@ -169,12 +167,6 @@ class SettingsRepository {
 
     suspend fun updateComicMode(value: String) {
         val newSettings = _settings.value.copy(comicMode = value)
-        _settings.value = newSettings
-        saveSettings(newSettings)
-    }
-
-    suspend fun updateMangaLanguage(value: String) {
-        val newSettings = _settings.value.copy(mangaLanguage = value)
         _settings.value = newSettings
         saveSettings(newSettings)
     }

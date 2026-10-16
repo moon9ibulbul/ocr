@@ -12,8 +12,8 @@ android {
         applicationId = "com.astral.ocr"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.1.3"
+        versionCode = 2
+        versionName = "1.1.4"
 
         vectorDrawables {
             useSupportLibrary = true

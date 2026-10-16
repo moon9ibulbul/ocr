@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.ImagesearchRoller
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -27,13 +26,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -57,16 +52,6 @@ fun HomeScreen(
     onSaveResult: (String, String) -> Unit,
     onCancelProcessing: () -> Unit
 ) {
-    val clipboard = LocalClipboardManager.current
-    val segmentedOptions = listOf("Single", "Bulk")
-    var selectedIndex by remember(uiState.bulkMode) {
-        mutableIntStateOf(if (uiState.bulkMode) 1 else 0)
-    }
-
-    LaunchedEffect(selectedIndex) {
-        onToggleBulk(selectedIndex == 1)
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,34 +59,17 @@ fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Ekstrak bubble speech, SFX, dan teks luar dengan sekali sentuh.",
-            style = MaterialTheme.typography.bodyLarge
-        )
-
-        SingleChoiceSegmentedButtonRow {
-            segmentedOptions.forEachIndexed { index, label ->
-                SegmentedButton(
-                    selected = selectedIndex == index,
-                    onClick = { selectedIndex = index },
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(text = label)
-                }
-            }
-        }
-
         Button(
-            onClick = if (uiState.bulkMode) onPickMultiple else onPickSingle,
+            onClick = onPickMultiple,
             modifier = Modifier.fillMaxWidth(),
             enabled = !uiState.isProcessing
         ) {
             Icon(
-                imageVector = if (uiState.bulkMode) Icons.Default.ImagesearchRoller else Icons.Default.Image,
+                imageVector = Icons.Default.Image,
                 contentDescription = null
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = if (uiState.bulkMode) "Pilih Banyak Gambar" else "Pilih Gambar")
+            Text(text = "Pilih Gambar")
         }
 
         if (uiState.isProcessing) {
@@ -182,7 +150,7 @@ private fun ActionRow(
             }
             IconButton(
                 onClick = {
-                    val filename = if (isBulk) "astral_bulk_result.txt" else "astral_result.txt"
+                    val filename = "astral_result.txt"
                     onSaveResult(filename, combinedText)
                 }
             ) {

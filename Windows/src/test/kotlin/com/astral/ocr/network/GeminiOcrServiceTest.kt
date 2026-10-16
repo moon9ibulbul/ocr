@@ -51,7 +51,7 @@ class GeminiOcrServiceTest {
             val result = service.extractSpeech(
                 file = tempPngFile,
                 apiKey = "fake_key",
-                model = "gemini-2.0-flash",
+                model = "gemini-3.1-flash-lite",
                 sliceEnabled = false
             )
             assertTrue(result.isFailure)
