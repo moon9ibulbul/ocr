@@ -598,6 +598,8 @@ fun SettingsScreen(
         }
     }
 
+    var apiKeyVisible by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -651,33 +653,6 @@ fun SettingsScreen(
                     }
                 }
 
-                if (uiState.comicMode == "manga") {
-                    Text("Bahasa / Format Manga:", fontWeight = FontWeight.SemiBold)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val languages = listOf("jp" to "RAW (Jepang/China)", "en" to "Terjemahan Inggris")
-                        languages.forEach { (id, label) ->
-                            val isSelected = uiState.mangaLanguage == id
-                            OutlinedButton(
-                                onClick = { viewModel.updateMangaLanguage(id) },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = if (isSelected) CosmicPurple.copy(alpha = 0.4f) else Color.Transparent,
-                                    contentColor = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f)
-                                ),
-                                border = ButtonDefaults.outlinedButtonBorder.copy(
-                                    brush = Brush.linearGradient(
-                                        colors = if (isSelected) listOf(AuroraCyan, StellarPink) else listOf(Color.White.copy(alpha = 0.2f), Color.White.copy(alpha = 0.2f))
-                                    )
-                                )
-                            ) {
-                                Text(text = label)
-                            }
-                        }
-                    }
-                }
             }
         }
 
@@ -729,12 +704,23 @@ fun SettingsScreen(
                         apiKey = it
                         viewModel.updateApiKey(it)
                     },
-                    label = { Text("API Key") },
+                    label = { Text(if (uiState.apiProvider == "gemini") "API Key Gemini" else "Sumopod Token") },
+                    visualTransformation = if (apiKeyVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
+                            Icon(
+                                imageVector = if (apiKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (apiKeyVisible) "Sembunyikan" else "Tampilkan",
+                                tint = Color.White
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = AuroraCyan,
                         unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
-                    )
+                    ),
+                    singleLine = true
                 )
 
                 // Model Text Field
@@ -745,14 +731,16 @@ fun SettingsScreen(
                         viewModel.updateModel(it)
                     },
                     label = { Text("Nama Model") },
+                    placeholder = { Text(if (uiState.apiProvider == "gemini") "gemini-3.1-flash-lite" else "gemini/gemini-3.1-flash-lite") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = AuroraCyan,
                         unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
-                    )
+                    ),
+                    singleLine = true
                 )
                 Text(
-                    text = "Bawaan: gemini-2.0-flash. Pastikan model yang dimasukkan mendukung input gambar.",
+                    text = "Bawaan: gemini-3.1-flash-lite. Pastikan model yang dimasukkan mendukung input gambar.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.5f)
                 )

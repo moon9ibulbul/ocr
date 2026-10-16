@@ -41,13 +41,12 @@ class MainViewModel(
         val legendBubbleSquare: String = "[]",
         val legendOutside: String = "''",
         val ocrHistory: List<com.astral.ocr.data.OcrHistoryItem> = emptyList(),
-        val batchSize: Int = 5,
+        val batchSize: Int = 1,
         val includeBubbleRound: Boolean = true,
         val includeBubbleSquare: Boolean = true,
         val includeSFX: Boolean = true,
         val includeOutside: Boolean = true,
-        val comicMode: String = "manhwa",
-        val mangaLanguage: String = "jp"
+        val comicMode: String = "manhwa"
     )
 
     private val mutableResults = MutableStateFlow<List<OcrResult>>(emptyList())
@@ -78,7 +77,6 @@ class MainViewModel(
         settingsRepository.includeSFX,
         settingsRepository.includeOutside,
         settingsRepository.comicMode,
-        settingsRepository.mangaLanguage,
         mutableProcessing,
         mutableResults,
         mutableBulkMode,
@@ -101,12 +99,11 @@ class MainViewModel(
         val includeSFXVal = values[13] as Boolean
         val includeOutsideVal = values[14] as Boolean
         val comicModeVal = values[15] as String
-        val mangaLanguageVal = values[16] as String
-        val processing = values[17] as Boolean
-        val results = values[18] as List<OcrResult>
-        val bulk = values[19] as Boolean
-        val saved = values[20] as String?
-        val progress = values[21] as String?
+        val processing = values[16] as Boolean
+        val results = values[17] as List<OcrResult>
+        val bulk = values[18] as Boolean
+        val saved = values[19] as String?
+        val progress = values[20] as String?
 
         UiState(
             apiKey = apiKey,
@@ -129,8 +126,7 @@ class MainViewModel(
             includeBubbleSquare = includeBubbleSquareVal,
             includeSFX = includeSFXVal,
             includeOutside = includeOutsideVal,
-            comicMode = comicModeVal,
-            mangaLanguage = mangaLanguageVal
+            comicMode = comicModeVal
         )
     }.stateIn(scope, SharingStarted.Eagerly, UiState())
 
@@ -229,12 +225,6 @@ class MainViewModel(
         }
     }
 
-    fun updateMangaLanguage(value: String) {
-        scope.launch {
-            settingsRepository.updateMangaLanguage(value)
-        }
-    }
-
     fun clearHistory() {
         scope.launch {
             settingsRepository.updateOcrHistory(emptyList())
@@ -327,7 +317,7 @@ class MainViewModel(
     }
 
     companion object {
-        const val DEFAULT_MODEL = "gemini-2.0-flash"
+        const val DEFAULT_MODEL = "gemini-3.1-flash-lite"
     }
 
     private fun notifyError(ex: Throwable) {
@@ -366,8 +356,7 @@ class MainViewModel(
                     includeBubbleSquare = uiState.value.includeBubbleSquare,
                     includeSFX = uiState.value.includeSFX,
                     includeOutside = uiState.value.includeOutside,
-                    comicMode = uiState.value.comicMode,
-                    mangaLanguage = uiState.value.mangaLanguage
+                    comicMode = uiState.value.comicMode
                 )
                 result.fold(
                     onSuccess = { text ->

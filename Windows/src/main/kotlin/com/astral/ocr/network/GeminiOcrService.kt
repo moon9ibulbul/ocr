@@ -50,8 +50,7 @@ class GeminiOcrService(
         includeBubbleSquare: Boolean = true,
         includeSFX: Boolean = true,
         includeOutside: Boolean = true,
-        comicMode: String = "manhwa",
-        mangaLanguage: String = "jp"
+        comicMode: String = "manhwa"
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank() || model.isBlank()) {
             return@withContext Result.failure(IllegalStateException("API key dan model harus diisi pada pengaturan."))
@@ -96,8 +95,7 @@ class GeminiOcrService(
                     customLegend,
                     legendBubbleRound,
                     legendBubbleSquare,
-                    legendOutside,
-                    mangaLanguage
+                    legendOutside
                 )
             } else {
                 buildBatchPrompt(
@@ -161,24 +159,8 @@ class GeminiOcrService(
         customLegend: String = "//",
         legendBubbleRound: String = "()",
         legendBubbleSquare: String = "[]",
-        legendOutside: String = "''",
-        mangaLanguage: String = "jp"
+        legendOutside: String = "''"
     ): String {
-        val languageInstruction = if (mangaLanguage == "en") {
-            """
-            PENTING UNTUK TEKS INGGRIS / TERJEMAHAN:
-            - Teks di dalam balon kata (speech bubble) dan narasi ditulis secara HORIZONTAL dari KIRI ke KANAN, atas ke bawah.
-            - Urutan antar panel (koma) dan antar balon kata TETAP mengikuti alur membaca Manga Jepang: dari KANAN ke KIRI dan ATAS ke BAWAH.
-            """.trimIndent()
-        } else {
-            """
-            PENTING UNTUK MANGA RAW (JEPANG/CHINA):
-            - Arah membaca halaman dan antar panel: dari KANAN ke KIRI dan ATAS ke BAWAH.
-            - Teks di dalam balon kata umumnya ditulis secara VERTIKAL (Tategaki): baca dari ATAS ke BAWAH per kolom, dan dari kolom paling KANAN ke KIRI.
-            - Teks horizontal (Yokogaki) atau SFX dibaca dari kiri ke kanan, atas ke bawah.
-            """.trimIndent()
-        }
-
         val segmentRange = if (startSegment == endSegment) "SEGMEN $startSegment" else "SEGMEN $startSegment sampai $endSegment"
         return """
             Kamu adalah asisten OCR khusus untuk manga. Input yang diberikan adalah halaman manga ($segmentRange dari total $totalSegments segmen).
@@ -186,7 +168,10 @@ class GeminiOcrService(
             Jika gambar ini kosong, tidak memiliki balon ucapan (speech bubble), tidak memiliki efek suara (SFX), atau tidak memiliki teks sama sekali, kamu HARUS mengembalikan teks "Tidak ada teks yang terdeteksi". Jangan berhalusinasi, jangan menebak dialog, dan jangan mengasumsikan dialog atau cerita sendiri jika gambarnya kosong atau tidak ada teks.
 
             Aturan Alur Baca Manga (Panel-Aware):
-            $languageInstruction
+            - Arah membaca halaman dan antar panel: dari KANAN ke KIRI dan ATAS ke BAWAH.
+            - Teks vertikal (Tategaki): baca dari ATAS ke BAWAH per kolom, dan dari kolom paling KANAN ke KIRI.
+            - Teks horizontal (Yokogaki / Bahasa Inggris / Terjemahan): baca dari kiri ke kanan, atas ke bawah.
+            - Apabila suatu panel atau bubble memiliki multi bahasa (misal kombinasi Jepang, Inggris, atau bahasa lain), pastikan SEMUA teks dan semua bahasa tetap terdeteksi.
 
             Tugas:
             - Kenali panel-panel (koma) pada halaman dari kanan-atas ke kiri-bawah.
