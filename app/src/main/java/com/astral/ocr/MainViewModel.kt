@@ -50,7 +50,8 @@ class MainViewModel(
         val includeBubbleSquare: Boolean = true,
         val includeSFX: Boolean = true,
         val includeOutside: Boolean = true,
-        val comicMode: String = "manhwa"
+        val comicMode: String = "manhwa",
+        val panelHeaderFormat: String = "Panel {num}"
     )
 
     private val mutableResults = MutableStateFlow<List<OcrResult>>(emptyList())
@@ -81,6 +82,7 @@ class MainViewModel(
         settingsRepository.includeSFX,
         settingsRepository.includeOutside,
         settingsRepository.comicMode,
+        settingsRepository.panelHeaderFormat,
         mutableProcessing,
         mutableResults,
         mutableBulkMode,
@@ -103,11 +105,12 @@ class MainViewModel(
         val includeSFXVal = values[13] as Boolean
         val includeOutsideVal = values[14] as Boolean
         val comicModeVal = values[15] as String
-        val processing = values[16] as Boolean
-        val results = values[17] as List<OcrResult>
-        val bulk = values[18] as Boolean
-        val saved = values[19] as String?
-        val progress = values[20] as String?
+        val panelHeaderFormatVal = values[16] as String
+        val processing = values[17] as Boolean
+        val results = values[18] as List<OcrResult>
+        val bulk = values[19] as Boolean
+        val saved = values[20] as String?
+        val progress = values[21] as String?
 
         val historyList = try {
             kotlinx.serialization.json.Json.decodeFromString<List<com.astral.ocr.data.OcrHistoryItem>>(ocrHistoryStr)
@@ -136,7 +139,8 @@ class MainViewModel(
             includeBubbleSquare = includeBubbleSquareVal,
             includeSFX = includeSFXVal,
             includeOutside = includeOutsideVal,
-            comicMode = comicModeVal
+            comicMode = comicModeVal,
+            panelHeaderFormat = if (panelHeaderFormatVal.isBlank()) "Panel {num}" else panelHeaderFormatVal
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState())
 
@@ -236,6 +240,12 @@ class MainViewModel(
     fun updateComicMode(value: String) {
         viewModelScope.launch {
             settingsRepository.updateComicMode(value)
+        }
+    }
+
+    fun updatePanelHeaderFormat(value: String) {
+        viewModelScope.launch {
+            settingsRepository.updatePanelHeaderFormat(value)
         }
     }
 
@@ -352,7 +362,7 @@ class MainViewModel(
             }
             mutableResults.value = newResults
             if (newResults.isNotEmpty()) {
-                val combinedText = newResults.joinToString(separator = "\n\n") { it.processedText }
+                val combinedText = com.astral.ocr.data.formatCombinedResults(context, newResults, uiState.value.panelHeaderFormat)
                 addHistoryItem(combinedText)
             }
         } finally {

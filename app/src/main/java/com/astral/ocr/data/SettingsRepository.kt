@@ -31,6 +31,7 @@ class SettingsRepository(private val context: Context) {
         val includeSFX = booleanPreferencesKey("include_sfx")
         val includeOutside = booleanPreferencesKey("include_outside")
         val comicMode = stringPreferencesKey("comic_mode")
+        val panelHeaderFormat = stringPreferencesKey("panel_header_format")
     }
 
     val apiKey: Flow<String> = context.dataStore.data.map { it[Keys.apiKey].orEmpty() }
@@ -49,6 +50,13 @@ class SettingsRepository(private val context: Context) {
     val includeSFX: Flow<Boolean> = context.dataStore.data.map { it[Keys.includeSFX] ?: true }
     val includeOutside: Flow<Boolean> = context.dataStore.data.map { it[Keys.includeOutside] ?: true }
     val comicMode: Flow<String> = context.dataStore.data.map { it[Keys.comicMode] ?: "manhwa" }
+    val panelHeaderFormat: Flow<String> = context.dataStore.data.map { it[Keys.panelHeaderFormat].orEmpty().ifBlank { "Panel {num}" } }
+
+    suspend fun updatePanelHeaderFormat(value: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.panelHeaderFormat] = value
+        }
+    }
 
     suspend fun updateComicMode(value: String) {
         context.dataStore.edit { prefs ->

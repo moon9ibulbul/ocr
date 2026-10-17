@@ -396,23 +396,8 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            val combinedText = remember(uiState.results, uiState.bulkMode) {
-                                if (uiState.results.isEmpty()) {
-                                    ""
-                                } else if (uiState.bulkMode) {
-                                    uiState.results.mapIndexed { index, result ->
-                                        buildString {
-                                            append("Panel : ")
-                                            append(index + 1)
-                                            append('\n')
-                                            append(result.processedText.trimEnd())
-                                        }
-                                    }.joinToString(separator = "\n\n")
-                                } else {
-                                    uiState.results.joinToString(separator = "\n\n") { result ->
-                                        result.processedText
-                                    }
-                                }
+                            val combinedText = remember(uiState.results, uiState.panelHeaderFormat) {
+                                com.astral.ocr.data.formatCombinedResults(uiState.results, uiState.panelHeaderFormat)
                             }
 
                             Button(
@@ -566,6 +551,7 @@ fun SettingsScreen(
     var legendBubbleSquare by remember { mutableStateOf(uiState.legendBubbleSquare) }
     var customLegend by remember { mutableStateOf(uiState.customLegend) }
     var legendOutside by remember { mutableStateOf(uiState.legendOutside) }
+    var panelHeaderFormat by remember { mutableStateOf(uiState.panelHeaderFormat) }
 
     LaunchedEffect(uiState.apiKey) {
         if (apiKey != uiState.apiKey) {
@@ -597,6 +583,11 @@ fun SettingsScreen(
             legendOutside = uiState.legendOutside
         }
     }
+    LaunchedEffect(uiState.panelHeaderFormat) {
+        if (panelHeaderFormat != uiState.panelHeaderFormat) {
+            panelHeaderFormat = uiState.panelHeaderFormat
+        }
+    }
 
     var apiKeyVisible by remember { mutableStateOf(false) }
 
@@ -613,6 +604,44 @@ fun SettingsScreen(
             fontWeight = FontWeight.Bold,
             color = AuroraCyan
         )
+
+        // PANEL HEADER FORMAT CONFIGURATION
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF14143C).copy(alpha = 0.85f)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    text = "Format Awalan Panel",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = StellarPink
+                )
+
+                OutlinedTextField(
+                    value = panelHeaderFormat,
+                    onValueChange = {
+                        panelHeaderFormat = it
+                        viewModel.updatePanelHeaderFormat(it)
+                    },
+                    label = { Text("Format Awalan Output") },
+                    placeholder = { Text("Panel {num}") },
+                    supportingText = {
+                        Text(
+                            text = "Variabel: {num} (nomor), {name} (nama file), {ext} (ekstensi), {path} (path lengkap)",
+                            color = Color.White.copy(alpha = 0.6f)
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AuroraCyan,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                    ),
+                    singleLine = true
+                )
+            }
+        }
 
         // COMIC MODE CONFIGURATION
         Card(
