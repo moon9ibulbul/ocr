@@ -129,7 +129,7 @@ class GeminiOcrService(
                                 includeBubbleSquare,
                                 includeSFX,
                                 includeOutside,
-                                legendOverride
+                                "default"
                             )
                         )
                     )
@@ -141,7 +141,46 @@ class GeminiOcrService(
         }
 
         val merged = mergeSegments(segmentResults)
-        Result.success(merged)
+        val finalResult = applyLegendOverride(
+            merged,
+            legendOverride,
+            listOf(legendBubbleRound, legendBubbleSquare, customLegend, legendOutside)
+        )
+        Result.success(finalResult)
+    }
+
+    private fun applyLegendOverride(
+        text: String,
+        legendOverride: String,
+        prefixes: List<String>
+    ): String {
+        if (text.isBlank()) return text
+        if (legendOverride.equals("default", ignoreCase = true)) return text
+
+        val lines = text.split('\n')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+
+        fun stripPrefix(line: String): String {
+            val prefix = prefixes.firstOrNull { candidate ->
+                line.startsWith(candidate) || line.startsWith("$candidate :")
+            }
+            return if (prefix != null) {
+                line.removePrefix(prefix).trim().removePrefix(":").trim()
+            } else {
+                line
+            }
+        }
+
+        return lines.mapIndexed { index, line ->
+            val stripped = stripPrefix(line)
+            when (legendOverride.lowercase()) {
+                "none", "tanpa legenda", "tanpa_legenda" -> stripped
+                "strip", "garis strip", "garis_strip" -> "- $stripped"
+                "number", "urutan angka", "urutan_angka" -> "${index + 1}. $stripped"
+                else -> line
+            }
+        }.joinToString(separator = "\n")
     }
 
     private fun parseErrorMessage(raw: String?): String? {

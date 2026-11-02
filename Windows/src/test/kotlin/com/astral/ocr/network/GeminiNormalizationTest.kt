@@ -139,4 +139,54 @@ class GeminiNormalizationTest {
 
         assertEquals(expected, result)
     }
+
+    @Test
+    fun testApplyLegendOverrideMultiSegmentPanel() {
+        val ocrService = GeminiOcrService()
+        val mergedSegmentsText = """
+            () : Segmen 1 Teks A
+            [] : Segmen 1 Teks B
+            () : Segmen 2 Teks C
+            // : Segmen 2 SFX
+        """.trimIndent()
+
+        val applyMethod: Method = GeminiOcrService::class.java.getDeclaredMethod(
+            "applyLegendOverride",
+            String::class.java,
+            String::class.java,
+            List::class.java
+        ).apply { isAccessible = true }
+
+        val prefixes = listOf("()", "[]", "//", "''")
+
+        // 1. Numbered: should be sequentially numbered across the entire panel (1 to 4)
+        val numberedResult = applyMethod.invoke(ocrService, mergedSegmentsText, "number", prefixes) as String
+        val expectedNumbered = """
+            1. Segmen 1 Teks A
+            2. Segmen 1 Teks B
+            3. Segmen 2 Teks C
+            4. Segmen 2 SFX
+        """.trimIndent()
+        assertEquals(expectedNumbered, numberedResult)
+
+        // 2. Strip: all lines prefixed with '-'
+        val stripResult = applyMethod.invoke(ocrService, mergedSegmentsText, "strip", prefixes) as String
+        val expectedStrip = """
+            - Segmen 1 Teks A
+            - Segmen 1 Teks B
+            - Segmen 2 Teks C
+            - Segmen 2 SFX
+        """.trimIndent()
+        assertEquals(expectedStrip, stripResult)
+
+        // 3. None: plain texts
+        val noneResult = applyMethod.invoke(ocrService, mergedSegmentsText, "none", prefixes) as String
+        val expectedNone = """
+            Segmen 1 Teks A
+            Segmen 1 Teks B
+            Segmen 2 Teks C
+            Segmen 2 SFX
+        """.trimIndent()
+        assertEquals(expectedNone, noneResult)
+    }
 }
