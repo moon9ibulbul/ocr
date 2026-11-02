@@ -51,7 +51,8 @@ class MainViewModel(
         val includeSFX: Boolean = true,
         val includeOutside: Boolean = true,
         val comicMode: String = "manhwa",
-        val panelHeaderFormat: String = "Panel {num}"
+        val panelHeaderFormat: String = "Panel {num}",
+        val legendOverride: String = "default"
     )
 
     private val mutableResults = MutableStateFlow<List<OcrResult>>(emptyList())
@@ -83,6 +84,7 @@ class MainViewModel(
         settingsRepository.includeOutside,
         settingsRepository.comicMode,
         settingsRepository.panelHeaderFormat,
+        settingsRepository.legendOverride,
         mutableProcessing,
         mutableResults,
         mutableBulkMode,
@@ -106,11 +108,12 @@ class MainViewModel(
         val includeOutsideVal = values[14] as Boolean
         val comicModeVal = values[15] as String
         val panelHeaderFormatVal = values[16] as String
-        val processing = values[17] as Boolean
-        val results = values[18] as List<OcrResult>
-        val bulk = values[19] as Boolean
-        val saved = values[20] as String?
-        val progress = values[21] as String?
+        val legendOverrideVal = values[17] as String
+        val processing = values[18] as Boolean
+        val results = values[19] as List<OcrResult>
+        val bulk = values[20] as Boolean
+        val saved = values[21] as String?
+        val progress = values[22] as String?
 
         val historyList = try {
             kotlinx.serialization.json.Json.decodeFromString<List<com.astral.ocr.data.OcrHistoryItem>>(ocrHistoryStr)
@@ -140,7 +143,8 @@ class MainViewModel(
             includeSFX = includeSFXVal,
             includeOutside = includeOutsideVal,
             comicMode = comicModeVal,
-            panelHeaderFormat = if (panelHeaderFormatVal.isBlank()) "Panel {num}" else panelHeaderFormatVal
+            panelHeaderFormat = if (panelHeaderFormatVal.isBlank()) "Panel {num}" else panelHeaderFormatVal,
+            legendOverride = if (legendOverrideVal.isBlank()) "default" else legendOverrideVal
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState())
 
@@ -249,6 +253,12 @@ class MainViewModel(
         }
     }
 
+    fun updateLegendOverride(value: String) {
+        viewModelScope.launch {
+            settingsRepository.updateLegendOverride(value)
+        }
+    }
+
     fun clearHistory() {
         viewModelScope.launch {
             settingsRepository.updateOcrHistory("[]")
@@ -348,7 +358,8 @@ class MainViewModel(
                     includeBubbleSquare = uiState.value.includeBubbleSquare,
                     includeSFX = uiState.value.includeSFX,
                     includeOutside = uiState.value.includeOutside,
-                    comicMode = uiState.value.comicMode
+                    comicMode = uiState.value.comicMode,
+                    legendOverride = uiState.value.legendOverride
                 )
                 result.fold(
                     onSuccess = { text ->

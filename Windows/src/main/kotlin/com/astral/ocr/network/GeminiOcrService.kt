@@ -50,7 +50,8 @@ class GeminiOcrService(
         includeBubbleSquare: Boolean = true,
         includeSFX: Boolean = true,
         includeOutside: Boolean = true,
-        comicMode: String = "manhwa"
+        comicMode: String = "manhwa",
+        legendOverride: String = "default"
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank() || model.isBlank()) {
             return@withContext Result.failure(IllegalStateException("API key dan model harus diisi pada pengaturan."))
@@ -127,7 +128,8 @@ class GeminiOcrService(
                                 includeBubbleRound,
                                 includeBubbleSquare,
                                 includeSFX,
-                                includeOutside
+                                includeOutside,
+                                legendOverride
                             )
                         )
                     )
@@ -249,7 +251,8 @@ class GeminiOcrService(
         includeBubbleRound: Boolean = true,
         includeBubbleSquare: Boolean = true,
         includeSFX: Boolean = true,
-        includeOutside: Boolean = true
+        includeOutside: Boolean = true,
+        legendOverride: String = "default"
     ): String {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return ""
@@ -341,7 +344,7 @@ class GeminiOcrService(
             }
         }
 
-        return sorted.mapNotNull { block ->
+        val filteredBlocks = sorted.mapNotNull { block ->
             val prefix = block.prefix
             val text = block.builder.toString()
                 .replace("\\n", " ")
@@ -357,7 +360,16 @@ class GeminiOcrService(
                 if (prefix == legendOutside && !includeOutside) return@mapNotNull null
             }
 
-            if (prefix.isNullOrBlank()) text else "$prefix : $text"
+            prefix to text
+        }
+
+        return filteredBlocks.mapIndexed { index, (prefix, text) ->
+            when (legendOverride.lowercase()) {
+                "none", "tanpa legenda", "tanpa_legenda" -> text
+                "strip", "garis strip", "garis_strip" -> "- $text"
+                "number", "urutan angka", "urutan_angka" -> "${index + 1}. $text"
+                else -> if (prefix.isNullOrBlank()) text else "$prefix : $text"
+            }
         }.joinToString(separator = "\n")
     }
 

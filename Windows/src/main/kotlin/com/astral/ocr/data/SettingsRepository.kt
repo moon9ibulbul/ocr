@@ -27,7 +27,8 @@ data class SettingsData(
     val includeSFX: Boolean = true,
     val includeOutside: Boolean = true,
     val comicMode: String = "manhwa",
-    val panelHeaderFormat: String = "Panel {num}"
+    val panelHeaderFormat: String = "Panel {num}",
+    val legendOverride: String = "default"
 )
 
 class SettingsRepository {
@@ -54,6 +55,7 @@ class SettingsRepository {
     val includeOutside: Flow<Boolean> = _settings.map { it.includeOutside }
     val comicMode: Flow<String> = _settings.map { it.comicMode }
     val panelHeaderFormat: Flow<String> = _settings.map { it.panelHeaderFormat }
+    val legendOverride: Flow<String> = _settings.map { it.legendOverride }
 
     private fun loadSettings(): SettingsData {
         return try {
@@ -175,6 +177,12 @@ class SettingsRepository {
 
     suspend fun updatePanelHeaderFormat(value: String) {
         val newSettings = _settings.value.copy(panelHeaderFormat = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updateLegendOverride(value: String) {
+        val newSettings = _settings.value.copy(legendOverride = value)
         _settings.value = newSettings
         saveSettings(newSettings)
     }

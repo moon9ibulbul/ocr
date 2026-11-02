@@ -139,6 +139,7 @@ fun AstralApp(
                         onIncludeOutsideChanged = viewModel::updateIncludeOutside,
                         onComicModeChanged = viewModel::updateComicMode,
                         onPanelHeaderFormatChanged = viewModel::updatePanelHeaderFormat,
+                        onLegendOverrideChanged = viewModel::updateLegendOverride,
                         onClearHistory = viewModel::clearHistory,
                         onSaveHistoryItem = { filename, content ->
                             createDocument(filename) { uri ->
