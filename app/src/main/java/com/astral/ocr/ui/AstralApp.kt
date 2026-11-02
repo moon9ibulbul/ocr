@@ -138,6 +138,7 @@ fun AstralApp(
                         onIncludeSFXChanged = viewModel::updateIncludeSFX,
                         onIncludeOutsideChanged = viewModel::updateIncludeOutside,
                         onComicModeChanged = viewModel::updateComicMode,
+                        onPanelHeaderFormatChanged = viewModel::updatePanelHeaderFormat,
                         onClearHistory = viewModel::clearHistory,
                         onSaveHistoryItem = { filename, content ->
                             createDocument(filename) { uri ->

@@ -72,6 +72,7 @@ fun SettingsScreen(
     onIncludeSFXChanged: (Boolean) -> Unit,
     onIncludeOutsideChanged: (Boolean) -> Unit,
     onComicModeChanged: (String) -> Unit,
+    onPanelHeaderFormatChanged: (String) -> Unit,
     onClearHistory: () -> Unit,
     onSaveHistoryItem: (String, String) -> Unit
 ) {
@@ -90,6 +91,7 @@ fun SettingsScreen(
     val includeSFXState = remember(uiState.includeSFX) { mutableStateOf(uiState.includeSFX) }
     val includeOutsideState = remember(uiState.includeOutside) { mutableStateOf(uiState.includeOutside) }
     val comicModeState = remember(uiState.comicMode) { mutableStateOf(uiState.comicMode) }
+    val panelHeaderFormatState = remember(uiState.panelHeaderFormat) { mutableStateOf(uiState.panelHeaderFormat) }
 
     var apiKeyVisible by remember { mutableStateOf(false) }
 
@@ -166,6 +168,35 @@ fun SettingsScreen(
                     onValueChange = { modelState.value = it },
                     label = { Text(if (apiProviderState.value == "gemini") "Model Gemini" else "Model Sumopod") },
                     placeholder = { Text(if (apiProviderState.value == "gemini") "gemini-3.1-flash-lite" else "gemini/gemini-3.1-flash-lite") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+        }
+
+        // 1.5. FORMAT AWALAN PANEL CARD
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.Label, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Format Awalan Panel", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+
+                OutlinedTextField(
+                    value = panelHeaderFormatState.value,
+                    onValueChange = { panelHeaderFormatState.value = it },
+                    label = { Text("Format Awalan Output") },
+                    placeholder = { Text("Panel {num}") },
+                    supportingText = {
+                        Text("Variabel: {num} (nomor), {name} (nama file), {ext} (ekstensi), {path} (path lengkap)")
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -383,6 +414,7 @@ fun SettingsScreen(
                 onIncludeSFXChanged(includeSFXState.value)
                 onIncludeOutsideChanged(includeOutsideState.value)
                 onComicModeChanged(comicModeState.value)
+                onPanelHeaderFormatChanged(panelHeaderFormatState.value)
                 onBack()
             },
             modifier = Modifier.fillMaxWidth()

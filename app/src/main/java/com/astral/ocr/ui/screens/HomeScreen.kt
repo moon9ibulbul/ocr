@@ -91,7 +91,7 @@ fun HomeScreen(
             ActionRow(
                 onClear = onClear,
                 onSaveResult = onSaveResult,
-                isBulk = uiState.bulkMode,
+                panelHeaderFormat = uiState.panelHeaderFormat,
                 results = uiState.results
             )
             ResultList(results = uiState.results)
@@ -103,28 +103,14 @@ fun HomeScreen(
 private fun ActionRow(
     onClear: () -> Unit,
     onSaveResult: (String, String) -> Unit,
-    isBulk: Boolean,
+    panelHeaderFormat: String,
     results: List<OcrResult>
 ) {
     val clipboard = LocalClipboardManager.current
+    val context = androidx.compose.ui.platform.LocalContext.current
 
-    val combinedText = remember(results, isBulk) {
-        if (results.isEmpty()) {
-            ""
-        } else if (isBulk) {
-            results.mapIndexed { index, result ->
-                buildString {
-                    append("Panel : ")
-                    append(index + 1)
-                    append('\n')
-                    append(result.processedText.trimEnd())
-                }
-            }.joinToString(separator = "\n\n")
-        } else {
-            results.joinToString(separator = "\n\n") { result ->
-                result.processedText
-            }
-        }
+    val combinedText = remember(results, panelHeaderFormat) {
+        com.astral.ocr.data.formatCombinedResults(context, results, panelHeaderFormat)
     }
 
     androidx.compose.foundation.layout.Row(

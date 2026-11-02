@@ -26,7 +26,8 @@ data class SettingsData(
     val includeBubbleSquare: Boolean = true,
     val includeSFX: Boolean = true,
     val includeOutside: Boolean = true,
-    val comicMode: String = "manhwa"
+    val comicMode: String = "manhwa",
+    val panelHeaderFormat: String = "Panel {num}"
 )
 
 class SettingsRepository {
@@ -52,6 +53,7 @@ class SettingsRepository {
     val includeSFX: Flow<Boolean> = _settings.map { it.includeSFX }
     val includeOutside: Flow<Boolean> = _settings.map { it.includeOutside }
     val comicMode: Flow<String> = _settings.map { it.comicMode }
+    val panelHeaderFormat: Flow<String> = _settings.map { it.panelHeaderFormat }
 
     private fun loadSettings(): SettingsData {
         return try {
@@ -167,6 +169,12 @@ class SettingsRepository {
 
     suspend fun updateComicMode(value: String) {
         val newSettings = _settings.value.copy(comicMode = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updatePanelHeaderFormat(value: String) {
+        val newSettings = _settings.value.copy(panelHeaderFormat = value)
         _settings.value = newSettings
         saveSettings(newSettings)
     }
