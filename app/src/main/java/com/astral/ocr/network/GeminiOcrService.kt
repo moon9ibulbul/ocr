@@ -53,7 +53,8 @@ class GeminiOcrService(
         includeSFX: Boolean = true,
         includeOutside: Boolean = true,
         comicMode: String = "manhwa",
-        legendOverride: String = "default"
+        legendOverride: String = "default",
+        fallbackModel: String = "gpt-5.6-luna"
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank() || model.isBlank()) {
             return@withContext Result.failure(IllegalStateException("API key dan model harus diisi pada pengaturan."))
@@ -111,7 +112,15 @@ class GeminiOcrService(
             }
             val base64s = indexedSegments.map { encodeBitmap(it.value) }
 
-            val response = requestWithRetry(apiKey, model, payloadMimeType, base64s, prompt, apiProvider = apiProvider)
+            val response = requestWithRetry(
+                apiKey = apiKey,
+                model = model,
+                mimeType = payloadMimeType,
+                base64s = base64s,
+                prompt = prompt,
+                apiProvider = apiProvider,
+                fallbackModel = fallbackModel
+            )
             response.fold(
                 onSuccess = { raw ->
                     segmentResults.add(
@@ -420,17 +429,20 @@ class GeminiOcrService(
         return Base64.encodeToString(bytes, Base64.NO_WRAP)
     }
 
-    private suspend fun requestWithRetry(
+    internal suspend fun requestWithRetry(
         apiKey: String,
         model: String,
         mimeType: String,
         base64s: List<String>,
         prompt: String,
         retries: Int = MAX_RETRIES,
-        apiProvider: String = "gemini"
+        apiProvider: String = "gemini",
+        fallbackModel: String = ""
     ): Result<String> {
         var attempt = 0
         var delayMs = INITIAL_BACKOFF_MS
+        var currentModel = model
+        var hasTriedFallback = false
 
         while (attempt <= retries) {
             val request = if (apiProvider == "sumopod") {
@@ -445,7 +457,7 @@ class GeminiOcrService(
                     )
                 }
                 val requestBody = OpenAiRequest(
-                    model = model,
+                    model = currentModel,
                     messages = listOf(
                         OpenAiMessage(
                             role = "user",
@@ -484,13 +496,13 @@ class GeminiOcrService(
                 val mediaType = "application/json; charset=utf-8".toMediaType()
                 val body = json.encodeToString(requestBody).toRequestBody(mediaType)
                 Request.Builder()
-                    .url("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey")
+                    .url("https://generativelanguage.googleapis.com/v1beta/models/$currentModel:generateContent?key=$apiKey")
                     .post(body)
                     .build()
             }
 
             try {
-                executeRequest(request).use { response ->
+                val textResult: String? = executeRequest(request).use { response ->
                     if (!response.isSuccessful) {
                         val errorBody = response.body?.string()
                         val message = if (apiProvider == "sumopod") {
@@ -509,19 +521,26 @@ class GeminiOcrService(
                     }
 
                     val responseBody = response.body?.string() ?: return Result.failure(IOException("Respon kosong dari API"))
-                    val text = if (apiProvider == "sumopod") {
+                    if (apiProvider == "sumopod") {
                         val parsed = json.decodeFromString(OpenAiResponse.serializer(), responseBody)
                         parsed.choices?.firstOrNull()?.message?.content
                     } else {
                         val parsed = json.decodeFromString(GenerateContentResponse.serializer(), responseBody)
                         parsed.candidates?.firstOrNull()?.content?.parts?.firstOrNull { it.text != null }?.text
                     }
-
-                    if (text.isNullOrBlank()) {
-                        return Result.failure(IllegalStateException("API tidak mengembalikan teks."))
-                    }
-                    return Result.success(text)
                 }
+
+                if (textResult.isNullOrBlank()) {
+                    if (apiProvider == "sumopod" && !hasTriedFallback && fallbackModel.isNotBlank() && fallbackModel != currentModel) {
+                        currentModel = fallbackModel
+                        hasTriedFallback = true
+                        attempt = 0
+                        delayMs = INITIAL_BACKOFF_MS
+                        continue
+                    }
+                    return Result.failure(IllegalStateException("API tidak mengembalikan teks."))
+                }
+                return Result.success(textResult)
             } catch (ex: IOException) {
                 if (attempt == retries) {
                     return Result.failure(ex)
