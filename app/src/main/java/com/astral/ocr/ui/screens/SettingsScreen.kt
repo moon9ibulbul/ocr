@@ -73,6 +73,7 @@ fun SettingsScreen(
     onIncludeOutsideChanged: (Boolean) -> Unit,
     onComicModeChanged: (String) -> Unit,
     onPanelHeaderFormatChanged: (String) -> Unit,
+    onLegendOverrideChanged: (String) -> Unit,
     onClearHistory: () -> Unit,
     onSaveHistoryItem: (String, String) -> Unit
 ) {
@@ -92,6 +93,7 @@ fun SettingsScreen(
     val includeOutsideState = remember(uiState.includeOutside) { mutableStateOf(uiState.includeOutside) }
     val comicModeState = remember(uiState.comicMode) { mutableStateOf(uiState.comicMode) }
     val panelHeaderFormatState = remember(uiState.panelHeaderFormat) { mutableStateOf(uiState.panelHeaderFormat) }
+    val legendOverrideState = remember(uiState.legendOverride) { mutableStateOf(uiState.legendOverride) }
 
     var apiKeyVisible by remember { mutableStateOf(false) }
 
@@ -316,6 +318,46 @@ fun SettingsScreen(
                     Text("Legenda Output", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
 
+                Text("Override Legenda:", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("default" to "Bawaan", "none" to "Tanpa Legenda").forEach { (id, label) ->
+                            Button(
+                                onClick = { legendOverrideState.value = id },
+                                modifier = Modifier.weight(1f),
+                                colors = if (legendOverrideState.value == id) {
+                                    androidx.compose.material3.ButtonDefaults.buttonColors()
+                                } else {
+                                    androidx.compose.material3.ButtonDefaults.filledTonalButtonColors()
+                                }
+                            ) {
+                                Text(label)
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("strip" to "Garis Strip", "number" to "Urutan Angka").forEach { (id, label) ->
+                            Button(
+                                onClick = { legendOverrideState.value = id },
+                                modifier = Modifier.weight(1f),
+                                colors = if (legendOverrideState.value == id) {
+                                    androidx.compose.material3.ButtonDefaults.buttonColors()
+                                } else {
+                                    androidx.compose.material3.ButtonDefaults.filledTonalButtonColors()
+                                }
+                            ) {
+                                Text(label)
+                            }
+                        }
+                    }
+                }
+
                 Text("Sertakan di Output:", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
 
                 Row(
@@ -415,6 +457,7 @@ fun SettingsScreen(
                 onIncludeOutsideChanged(includeOutsideState.value)
                 onComicModeChanged(comicModeState.value)
                 onPanelHeaderFormatChanged(panelHeaderFormatState.value)
+                onLegendOverrideChanged(legendOverrideState.value)
                 onBack()
             },
             modifier = Modifier.fillMaxWidth()

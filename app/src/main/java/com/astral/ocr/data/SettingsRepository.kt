@@ -32,6 +32,7 @@ class SettingsRepository(private val context: Context) {
         val includeOutside = booleanPreferencesKey("include_outside")
         val comicMode = stringPreferencesKey("comic_mode")
         val panelHeaderFormat = stringPreferencesKey("panel_header_format")
+        val legendOverride = stringPreferencesKey("legend_override")
     }
 
     val apiKey: Flow<String> = context.dataStore.data.map { it[Keys.apiKey].orEmpty() }
@@ -51,6 +52,13 @@ class SettingsRepository(private val context: Context) {
     val includeOutside: Flow<Boolean> = context.dataStore.data.map { it[Keys.includeOutside] ?: true }
     val comicMode: Flow<String> = context.dataStore.data.map { it[Keys.comicMode] ?: "manhwa" }
     val panelHeaderFormat: Flow<String> = context.dataStore.data.map { it[Keys.panelHeaderFormat].orEmpty().ifBlank { "Panel {num}" } }
+    val legendOverride: Flow<String> = context.dataStore.data.map { it[Keys.legendOverride].orEmpty().ifBlank { "default" } }
+
+    suspend fun updateLegendOverride(value: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.legendOverride] = value
+        }
+    }
 
     suspend fun updatePanelHeaderFormat(value: String) {
         context.dataStore.edit { prefs ->

@@ -552,6 +552,7 @@ fun SettingsScreen(
     var customLegend by remember { mutableStateOf(uiState.customLegend) }
     var legendOutside by remember { mutableStateOf(uiState.legendOutside) }
     var panelHeaderFormat by remember { mutableStateOf(uiState.panelHeaderFormat) }
+    var legendOverride by remember { mutableStateOf(uiState.legendOverride) }
 
     LaunchedEffect(uiState.apiKey) {
         if (apiKey != uiState.apiKey) {
@@ -586,6 +587,11 @@ fun SettingsScreen(
     LaunchedEffect(uiState.panelHeaderFormat) {
         if (panelHeaderFormat != uiState.panelHeaderFormat) {
             panelHeaderFormat = uiState.panelHeaderFormat
+        }
+    }
+    LaunchedEffect(uiState.legendOverride) {
+        if (legendOverride != uiState.legendOverride) {
+            legendOverride = uiState.legendOverride
         }
     }
 
@@ -925,6 +931,45 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.6f)
                 )
+
+                Text(
+                    text = "Override Legenda:",
+                    fontWeight = FontWeight.SemiBold,
+                    color = StellarPink
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val overrideOptions = listOf(
+                        "default" to "Bawaan",
+                        "none" to "Tanpa Legenda",
+                        "strip" to "Garis Strip",
+                        "number" to "Urutan Angka"
+                    )
+                    overrideOptions.forEach { (id, label) ->
+                        val isSelected = legendOverride == id
+                        OutlinedButton(
+                            onClick = {
+                                legendOverride = id
+                                viewModel.updateLegendOverride(id)
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (isSelected) CosmicPurple.copy(alpha = 0.4f) else Color.Transparent,
+                                contentColor = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f)
+                            ),
+                            border = ButtonDefaults.outlinedButtonBorder.copy(
+                                brush = Brush.linearGradient(
+                                    colors = if (isSelected) listOf(AuroraCyan, StellarPink) else listOf(Color.White.copy(alpha = 0.2f), Color.White.copy(alpha = 0.2f))
+                                )
+                            )
+                        ) {
+                            Text(text = label)
+                        }
+                    }
+                }
 
                 val legends = listOf(
                     Triple("Bubble Bulat", legendBubbleRound, { newValue: String ->
