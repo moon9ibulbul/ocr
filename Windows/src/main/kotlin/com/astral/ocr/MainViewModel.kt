@@ -28,6 +28,7 @@ class MainViewModel(
     data class UiState(
         val apiKey: String = "",
         val model: String = DEFAULT_MODEL,
+        val fallbackModel: String = DEFAULT_FALLBACK_MODEL,
         val isProcessing: Boolean = false,
         val results: List<OcrResult> = emptyList(),
         val bulkMode: Boolean = false,
@@ -81,6 +82,7 @@ class MainViewModel(
         settingsRepository.comicMode,
         settingsRepository.panelHeaderFormat,
         settingsRepository.legendOverride,
+        settingsRepository.fallbackModel,
         mutableProcessing,
         mutableResults,
         mutableBulkMode,
@@ -105,15 +107,17 @@ class MainViewModel(
         val comicModeVal = values[15] as String
         val panelHeaderFormatVal = values[16] as String
         val legendOverrideVal = values[17] as String
-        val processing = values[18] as Boolean
-        val results = values[19] as List<OcrResult>
-        val bulk = values[20] as Boolean
-        val saved = values[21] as String?
-        val progress = values[22] as String?
+        val fallbackModelVal = values[18] as String
+        val processing = values[19] as Boolean
+        val results = values[20] as List<OcrResult>
+        val bulk = values[21] as Boolean
+        val saved = values[22] as String?
+        val progress = values[23] as String?
 
         UiState(
             apiKey = apiKey,
             model = if (model.isBlank()) DEFAULT_MODEL else model,
+            fallbackModel = if (fallbackModelVal.isBlank()) DEFAULT_FALLBACK_MODEL else fallbackModelVal,
             apiProvider = apiProvider,
             isProcessing = processing,
             results = results,
@@ -151,6 +155,12 @@ class MainViewModel(
     fun updateModel(value: String) {
         scope.launch {
             settingsRepository.updateModel(value)
+        }
+    }
+
+    fun updateFallbackModel(value: String) {
+        scope.launch {
+            settingsRepository.updateFallbackModel(value)
         }
     }
 
@@ -338,6 +348,7 @@ class MainViewModel(
 
     companion object {
         const val DEFAULT_MODEL = "gemini-3.1-flash-lite"
+        const val DEFAULT_FALLBACK_MODEL = "gpt-5.6-luna"
     }
 
     private fun notifyError(ex: Throwable) {
@@ -377,7 +388,8 @@ class MainViewModel(
                     includeSFX = uiState.value.includeSFX,
                     includeOutside = uiState.value.includeOutside,
                     comicMode = uiState.value.comicMode,
-                    legendOverride = uiState.value.legendOverride
+                    legendOverride = uiState.value.legendOverride,
+                    fallbackModel = uiState.value.fallbackModel
                 )
                 result.fold(
                     onSuccess = { text ->

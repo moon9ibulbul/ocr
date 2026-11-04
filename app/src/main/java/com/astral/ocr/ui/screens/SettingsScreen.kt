@@ -59,6 +59,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onApiKeyChanged: (String) -> Unit,
     onModelChanged: (String) -> Unit,
+    onFallbackModelChanged: (String) -> Unit,
     onApiProviderChanged: (String) -> Unit,
     onSliceEnabledChanged: (Boolean) -> Unit,
     onSliceHeightChanged: (Int) -> Unit,
@@ -79,6 +80,7 @@ fun SettingsScreen(
 ) {
     val apiKeyState = remember(uiState.apiKey) { mutableStateOf(uiState.apiKey) }
     val modelState = remember(uiState.model) { mutableStateOf(uiState.model) }
+    val fallbackModelState = remember(uiState.fallbackModel) { mutableStateOf(uiState.fallbackModel) }
     val apiProviderState = remember(uiState.apiProvider) { mutableStateOf(uiState.apiProvider) }
     val sliceEnabledState = remember(uiState.sliceEnabled) { mutableStateOf(uiState.sliceEnabled) }
     val sliceHeightState = remember(uiState.sliceHeight) { mutableStateOf(uiState.sliceHeight.toString()) }
@@ -173,6 +175,20 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
+
+                if (apiProviderState.value == "sumopod") {
+                    OutlinedTextField(
+                        value = fallbackModelState.value,
+                        onValueChange = { fallbackModelState.value = it },
+                        label = { Text("Model Fallback") },
+                        placeholder = { Text("gpt-5.6-luna") },
+                        supportingText = {
+                            Text("Model otomatis yang digunakan bila model utama tidak mengembalikan teks.")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
             }
         }
 
@@ -440,6 +456,7 @@ fun SettingsScreen(
             onClick = {
                 onApiKeyChanged(apiKeyState.value)
                 onModelChanged(modelState.value)
+                onFallbackModelChanged(fallbackModelState.value)
                 onApiProviderChanged(apiProviderState.value)
                 val parsedHeight = sliceHeightState.value.toIntOrNull()?.coerceAtLeast(MIN_SEGMENT_HEIGHT)
                     ?: uiState.sliceHeight

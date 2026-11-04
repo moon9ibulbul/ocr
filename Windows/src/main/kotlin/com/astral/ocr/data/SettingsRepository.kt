@@ -28,7 +28,8 @@ data class SettingsData(
     val includeOutside: Boolean = true,
     val comicMode: String = "manhwa",
     val panelHeaderFormat: String = "Panel {num}",
-    val legendOverride: String = "default"
+    val legendOverride: String = "default",
+    val fallbackModel: String = "gpt-5.6-luna"
 )
 
 class SettingsRepository {
@@ -56,6 +57,7 @@ class SettingsRepository {
     val comicMode: Flow<String> = _settings.map { it.comicMode }
     val panelHeaderFormat: Flow<String> = _settings.map { it.panelHeaderFormat }
     val legendOverride: Flow<String> = _settings.map { it.legendOverride }
+    val fallbackModel: Flow<String> = _settings.map { it.fallbackModel }
 
     private fun loadSettings(): SettingsData {
         return try {
@@ -81,6 +83,12 @@ class SettingsRepository {
 
     suspend fun updateApiKey(value: String) {
         val newSettings = _settings.value.copy(apiKey = value)
+        _settings.value = newSettings
+        saveSettings(newSettings)
+    }
+
+    suspend fun updateFallbackModel(value: String) {
+        val newSettings = _settings.value.copy(fallbackModel = value)
         _settings.value = newSettings
         saveSettings(newSettings)
     }

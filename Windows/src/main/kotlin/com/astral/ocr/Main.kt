@@ -547,6 +547,7 @@ fun SettingsScreen(
 
     var apiKey by remember { mutableStateOf(uiState.apiKey) }
     var model by remember { mutableStateOf(uiState.model) }
+    var fallbackModel by remember { mutableStateOf(uiState.fallbackModel) }
     var legendBubbleRound by remember { mutableStateOf(uiState.legendBubbleRound) }
     var legendBubbleSquare by remember { mutableStateOf(uiState.legendBubbleSquare) }
     var customLegend by remember { mutableStateOf(uiState.customLegend) }
@@ -562,6 +563,11 @@ fun SettingsScreen(
     LaunchedEffect(uiState.model) {
         if (model != uiState.model) {
             model = uiState.model
+        }
+    }
+    LaunchedEffect(uiState.fallbackModel) {
+        if (fallbackModel != uiState.fallbackModel) {
+            fallbackModel = uiState.fallbackModel
         }
     }
     LaunchedEffect(uiState.legendBubbleRound) {
@@ -779,6 +785,30 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.5f)
                 )
+
+                if (uiState.apiProvider == "sumopod") {
+                    OutlinedTextField(
+                        value = fallbackModel,
+                        onValueChange = {
+                            fallbackModel = it
+                            viewModel.updateFallbackModel(it)
+                        },
+                        label = { Text("Model Fallback") },
+                        placeholder = { Text("gpt-5.6-luna") },
+                        supportingText = {
+                            Text(
+                                text = "Model otomatis yang digunakan bila model utama tidak mengembalikan teks.",
+                                color = Color.White.copy(alpha = 0.6f)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AuroraCyan,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                        ),
+                        singleLine = true
+                    )
+                }
             }
         }
 

@@ -33,10 +33,12 @@ class SettingsRepository(private val context: Context) {
         val comicMode = stringPreferencesKey("comic_mode")
         val panelHeaderFormat = stringPreferencesKey("panel_header_format")
         val legendOverride = stringPreferencesKey("legend_override")
+        val fallbackModel = stringPreferencesKey("fallback_model")
     }
 
     val apiKey: Flow<String> = context.dataStore.data.map { it[Keys.apiKey].orEmpty() }
     val model: Flow<String> = context.dataStore.data.map { it[Keys.model].orEmpty() }
+    val fallbackModel: Flow<String> = context.dataStore.data.map { it[Keys.fallbackModel].orEmpty().ifBlank { "gpt-5.6-luna" } }
     val apiProvider: Flow<String> = context.dataStore.data.map { it[Keys.apiProvider] ?: "gemini" }
     val sliceEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.sliceEnabled] ?: true }
     val sliceHeight: Flow<Int> = context.dataStore.data.map { it[Keys.sliceHeight] ?: DEFAULT_SEGMENT_HEIGHT }
@@ -111,6 +113,12 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateModel(value: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.model] = value
+        }
+    }
+
+    suspend fun updateFallbackModel(value: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.fallbackModel] = value
         }
     }
 
