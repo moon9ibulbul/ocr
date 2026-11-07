@@ -717,7 +717,7 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val providers = listOf("gemini" to "Gemini API", "sumopod" to "Sumopod AI")
+                    val providers = listOf("gemini" to "Gemini API", "sumopod" to "Sumopod AI", "groq" to "Groq AI")
                     providers.forEach { (id, label) ->
                         val isSelected = uiState.apiProvider == id
                         OutlinedButton(
@@ -745,7 +745,15 @@ fun SettingsScreen(
                         apiKey = it
                         viewModel.updateApiKey(it)
                     },
-                    label = { Text(if (uiState.apiProvider == "gemini") "API Key Gemini" else "Sumopod Token") },
+                    label = {
+                        Text(
+                            when (uiState.apiProvider) {
+                                "gemini" -> "API Key Gemini"
+                                "groq" -> "API Key Groq"
+                                else -> "Sumopod Token"
+                            }
+                        )
+                    },
                     visualTransformation = if (apiKeyVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
@@ -771,8 +779,24 @@ fun SettingsScreen(
                         model = it
                         viewModel.updateModel(it)
                     },
-                    label = { Text("Nama Model") },
-                    placeholder = { Text(if (uiState.apiProvider == "gemini") "gemini-3.1-flash-lite" else "gemini/gemini-3.1-flash-lite") },
+                    label = {
+                        Text(
+                            when (uiState.apiProvider) {
+                                "gemini" -> "Model Gemini"
+                                "groq" -> "Model Groq"
+                                else -> "Model Sumopod"
+                            }
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            when (uiState.apiProvider) {
+                                "gemini" -> "gemini-3.1-flash-lite"
+                                "groq" -> "qwen/qwen3.8-27b"
+                                else -> "gemini/gemini-3.1-flash-lite"
+                            }
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = AuroraCyan,
