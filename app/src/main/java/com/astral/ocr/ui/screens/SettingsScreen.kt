@@ -135,7 +135,7 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    listOf("gemini" to "Gemini", "sumopod" to "Sumopod AI").forEach { (id, label) ->
+                    listOf("gemini" to "Gemini", "sumopod" to "Sumopod AI", "groq" to "Groq AI").forEach { (id, label) ->
                         Button(
                             onClick = { apiProviderState.value = id },
                             modifier = Modifier.weight(1f),
@@ -153,7 +153,15 @@ fun SettingsScreen(
                 OutlinedTextField(
                     value = apiKeyState.value,
                     onValueChange = { apiKeyState.value = it },
-                    label = { Text(if (apiProviderState.value == "gemini") "API Key Gemini" else "Sumopod Token") },
+                    label = {
+                        Text(
+                            when (apiProviderState.value) {
+                                "gemini" -> "API Key Gemini"
+                                "groq" -> "API Key Groq"
+                                else -> "Sumopod Token"
+                            }
+                        )
+                    },
                     visualTransformation = if (apiKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
@@ -170,8 +178,24 @@ fun SettingsScreen(
                 OutlinedTextField(
                     value = modelState.value,
                     onValueChange = { modelState.value = it },
-                    label = { Text(if (apiProviderState.value == "gemini") "Model Gemini" else "Model Sumopod") },
-                    placeholder = { Text(if (apiProviderState.value == "gemini") "gemini-3.1-flash-lite" else "gemini/gemini-3.1-flash-lite") },
+                    label = {
+                        Text(
+                            when (apiProviderState.value) {
+                                "gemini" -> "Model Gemini"
+                                "groq" -> "Model Groq"
+                                else -> "Model Sumopod"
+                            }
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            when (apiProviderState.value) {
+                                "gemini" -> "gemini-3.1-flash-lite"
+                                "groq" -> "qwen/qwen3.8-27b"
+                                else -> "gemini/gemini-3.1-flash-lite"
+                            }
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )

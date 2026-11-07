@@ -445,7 +445,7 @@ class GeminiOcrService(
         var hasTriedFallback = false
 
         while (attempt <= retries) {
-            val request = if (apiProvider == "sumopod") {
+            val request = if (apiProvider == "sumopod" || apiProvider == "groq") {
                 val contentList = mutableListOf<OpenAiContentPart>()
                 contentList.add(OpenAiContentPart(type = "text", text = prompt))
                 base64s.forEach { base64 ->
@@ -468,8 +468,13 @@ class GeminiOcrService(
                 )
                 val mediaType = "application/json; charset=utf-8".toMediaType()
                 val body = json.encodeToString(requestBody).toRequestBody(mediaType)
+                val endpoint = if (apiProvider == "groq") {
+                    "https://api.groq.com/openai/v1/chat/completions"
+                } else {
+                    "https://ai.sumopod.com/v1/chat/completions"
+                }
                 Request.Builder()
-                    .url("https://ai.sumopod.com/v1/chat/completions")
+                    .url(endpoint)
                     .header("Authorization", "Bearer $apiKey")
                     .post(body)
                     .build()
@@ -505,7 +510,7 @@ class GeminiOcrService(
                 val textResult: String? = executeRequest(request).use { response ->
                     if (!response.isSuccessful) {
                         val errorBody = response.body?.string()
-                        val message = if (apiProvider == "sumopod") {
+                        val message = if (apiProvider == "sumopod" || apiProvider == "groq") {
                             try {
                                 json.decodeFromString(OpenAiResponse.serializer(), errorBody ?: "").error?.message
                             } catch (_: Exception) {
@@ -521,7 +526,7 @@ class GeminiOcrService(
                     }
 
                     val responseBody = response.body?.string() ?: return Result.failure(IOException("Respon kosong dari API"))
-                    if (apiProvider == "sumopod") {
+                    if (apiProvider == "sumopod" || apiProvider == "groq") {
                         val parsed = json.decodeFromString(OpenAiResponse.serializer(), responseBody)
                         parsed.choices?.firstOrNull()?.message?.content
                     } else {
